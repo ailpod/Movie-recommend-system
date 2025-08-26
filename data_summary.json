@@ -1,0 +1,12 @@
+{
+  "total_movies": 4775,
+  "unique_genres": 20,
+  "unique_actors": 9359,
+  "unique_directors": 2566,
+  "avg_rating": 6.114198952879581,
+  "avg_runtime": 107.16230366492147,
+  "date_range": {
+    "earliest": "1916-09-04",
+    "latest": "2017-02-03"
+  }
+}
