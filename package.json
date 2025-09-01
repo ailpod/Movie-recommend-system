@@ -1,0 +1,48 @@
+{
+  "name": "movie-recommend-system",
+  "version": "1.0.0",
+  "description": "电影推荐系统 - 全栈项目 (Frontend Vue3 + Backend FastAPI)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install:backend": "cd Backend && pip install -r ../requirements.txt",
+    "install:frontend": "cd Frontend && npm install",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "dev:backend": "cd Backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:frontend": "cd Frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "cd Frontend && npm run build",
+    "build": "npm run build:frontend",
+    "lint:frontend": "cd Frontend && npm run lint",
+    "format:frontend": "cd Frontend && npm run format",
+    "test:frontend": "cd Frontend && npm run test:unit",
+    "migrate:db": "cd Backend && python migrate_database.py",
+    "export:data": "cd Backend && python export_data.py",
+    "import:data": "cd Backend && python import_data.py"
+  },
+  "workspaces": [
+    "Frontend"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ailpod/Movie-recommend-system.git"
+  },
+  "keywords": [
+    "movie",
+    "recommendation",
+    "vue3",
+    "fastapi",
+    "typescript",
+    "python",
+    "machine-learning"
+  ],
+  "author": "ailpod",
+  "license": "MIT"
+}
