@@ -44,7 +44,10 @@ def load_movie_data():
         movies_data = json.load(f)
     
     # 过滤vote >= 1000的电影
-    filtered_movies = [movie for movie in movies_data if movie.get('vote', 0) >= 1000]
+    filtered_movies = []
+    for movie in movies_data:
+        if isinstance(movie, dict) and movie.get('vote', 0) >= 1000:
+            filtered_movies.append(movie)
     
     print(f"🎬 原始电影数量: {len(movies_data)}")
     print(f"🎯 过滤后电影数量: {len(filtered_movies)} (vote >= 1000)")
@@ -62,16 +65,26 @@ def import_movies(engine, movies_data):
         imported_count = 0
         for movie_data in movies_data:
             try:
+                # 处理genres字段 - 如果是列表转换为字符串
+                genres = movie_data.get('genres', '')
+                if isinstance(genres, list):
+                    genres = ','.join(genres)
+                
+                # 处理actors字段 - 如果是列表转换为字符串  
+                actors = movie_data.get('actors', '')
+                if isinstance(actors, list):
+                    actors = ','.join(actors)
+                
                 movie = Movie(
                     id=movie_data.get('id'),
                     title=movie_data.get('title', ''),
                     description=movie_data.get('description', ''),
                     poster_path=movie_data.get('poster_path', ''),
                     avg_rate=round(float(movie_data.get('avg_rate', 0)), 2),
-                    genres=movie_data.get('genres', ''),
+                    genres=genres,
                     release_year=movie_data.get('release_year'),
                     director=movie_data.get('director', ''),
-                    actors=movie_data.get('actors', ''),
+                    actors=actors,
                     vote=int(movie_data.get('vote', 0))
                 )
                 
@@ -122,6 +135,7 @@ def create_sample_user(engine):
             hashed_password=get_password_hash("admin123"),
             age=25,
             gender="other",
+            like_genres="动作,科幻,冒险",
             is_active=True
         )
         

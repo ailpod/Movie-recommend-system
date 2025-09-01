@@ -38,6 +38,7 @@ class UserBase(BaseModel):
     email: EmailStr
     age: Optional[int] = Field(None, ge=1, le=150)
     gender: Optional[str] = Field(None, pattern="^(male|female|other)$")
+    like_genres: Optional[str] = None  # 用户喜欢的电影类型，逗号分隔
 
 class UserCreate(UserBase):
     password: str = Field(min_length=6, max_length=100)
@@ -47,6 +48,7 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     age: Optional[int] = Field(None, ge=1, le=150)
     gender: Optional[str] = Field(None, pattern="^(male|female|other)$")
+    like_genres: Optional[str] = None  # 用户喜欢的电影类型，逗号分隔
 
 class User(UserBase):
     model_config = ConfigDict(from_attributes=True)

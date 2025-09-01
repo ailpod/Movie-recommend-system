@@ -5,6 +5,7 @@ import SearchView from '../views/SearchView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const routes = [
   {
@@ -49,12 +50,12 @@ const routes = [
     }
   },
   {
-    path: '/genre/:id',
-    name: 'Genre',
-    component: () => import('../views/GenreView.vue'),
-    props: true,
+    path: '/recommend',
+    name: 'Recommend',
+    component: () => import('../views/RecommendView.vue'),
     meta: {
-      title: '分类浏览 - 电影推荐系统'
+      title: '个性化推荐 - 电影推荐系统',
+      requiresAuth: true
     }
   },
   {
@@ -108,11 +109,30 @@ const router = createRouter({
   }
 })
 
-// 路由守卫：设置页面标题
-router.beforeEach((to, from, next) => {
+// 路由守卫：设置页面标题和认证检查
+router.beforeEach(async (to, from, next) => {
   // 设置页面标题
   if (to.meta.title) {
     document.title = to.meta.title
+  }
+  
+  // 检查是否需要认证
+  if (to.meta.requiresAuth) {
+    const authStore = useAuthStore()
+    
+    // 初始化认证状态（如果还未初始化）
+    if (!authStore.initialized) {
+      await authStore.initialize()
+    }
+    
+    // 如果用户未登录，重定向到登录页面
+    if (!authStore.isAuthenticated) {
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath }
+      })
+      return
+    }
   }
   
   next()

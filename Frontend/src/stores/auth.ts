@@ -14,6 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshToken = ref<string | null>(localStorage.getItem('refresh_token'))
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const initialized = ref(false)
 
   // 计算属性
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
@@ -155,6 +156,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 初始化 - 静默检查认证状态
   const initialize = async () => {
+    if (initialized.value) return
+    
     try {
       if (accessToken.value) {
         await fetchUserInfo()
@@ -167,6 +170,8 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = null
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
+    } finally {
+      initialized.value = true
     }
   }
 

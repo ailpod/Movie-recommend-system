@@ -16,6 +16,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     age = Column(Integer, nullable=True)
     gender = Column(String(10), nullable=True)  # male, female, other
+    like_genres = Column(Text, nullable=True)  # 用户喜欢的电影类型，逗号分隔
     avatar = Column(String(255), nullable=True, default="/static/identify.jpg")  # 头像路径
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

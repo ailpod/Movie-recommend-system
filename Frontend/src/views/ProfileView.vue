@@ -62,6 +62,62 @@
           </div>
         </div>
       </div>
+
+      <!-- 电影偏好设置 -->
+      <div class="preferences-section">
+        <div class="section-header">
+          <h2>🎭 电影偏好设置</h2>
+          <p>选择您喜欢的电影类型，我们将为您提供个性化推荐</p>
+        </div>
+        
+        <div class="preferences-card">
+          <div class="current-preferences" v-if="userInfo?.like_genres">
+            <h3>当前偏好</h3>
+            <div class="genre-tags">
+              <span v-for="genre in userInfo.like_genres.split(',')" :key="genre" class="genre-tag current">
+                {{ genre.trim() }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="genre-selector">
+            <h3>选择电影类型 (可多选)</h3>
+            <div class="genre-grid">
+              <label 
+                v-for="genre in availableGenres" 
+                :key="genre" 
+                class="genre-option"
+                :class="{ selected: selectedGenres.includes(genre) }"
+              >
+                <input 
+                  type="checkbox" 
+                  :value="genre" 
+                  v-model="selectedGenres"
+                >
+                <span class="genre-name">{{ genre }}</span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="preferences-actions">
+            <button 
+              @click="updatePreferences" 
+              class="save-btn"
+              :disabled="saving || selectedGenres.length === 0"
+            >
+              <span v-if="saving">保存中...</span>
+              <span v-else>💾 保存偏好</span>
+            </button>
+            <button 
+              @click="resetPreferences" 
+              class="reset-btn"
+              :disabled="saving"
+            >
+              🔄 重置
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -71,6 +127,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { fetchFavorites } from '@/api/userActions.js'
+import userApi from '@/services/userApi.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -79,6 +136,18 @@ const authStore = useAuthStore()
 const userInfo = ref(null)
 // 收藏电影数
 const favoriteCount = ref(0)
+
+// 电影偏好相关
+const selectedGenres = ref([])
+const saving = ref(false)
+
+// 可选的电影类型
+const availableGenres = ref([
+  '动作', '冒险', '喜剧', '剧情', '家庭', '奇幻', 
+  '恐怖', '悬疑', '爱情', '科幻', '惊悚', '战争',
+  '西部', '动画', '犯罪', '纪录片', '历史', '音乐',
+  '运动', '传记', '儿童', '短片'
+])
 
 // 获取用户头像
 const getUserAvatar = () => {
@@ -196,8 +265,57 @@ watch(() => authStore.isAuthenticated, (newValue) => {
 watch(() => authStore.userInfo, (newUserInfo) => {
   if (newUserInfo) {
     userInfo.value = newUserInfo
+    // 同时更新选中的电影类型
+    if (newUserInfo.like_genres) {
+      selectedGenres.value = newUserInfo.like_genres.split(',').map(g => g.trim())
+    }
   }
 }, { immediate: true, deep: true })
+
+// 初始化用户偏好
+watch(() => userInfo.value?.like_genres, (newGenres) => {
+  if (newGenres) {
+    selectedGenres.value = newGenres.split(',').map(g => g.trim())
+  } else {
+    selectedGenres.value = []
+  }
+}, { immediate: true })
+
+// 更新用户电影偏好
+const updatePreferences = async () => {
+  if (selectedGenres.value.length === 0) {
+    alert('请至少选择一个电影类型！')
+    return
+  }
+
+  saving.value = true
+  try {
+    const genres = selectedGenres.value.join(',')
+    
+    // 调用API更新用户信息
+    const updateData = {
+      like_genres: genres
+    }
+    
+    const response = await userApi.updateUser(updateData)
+    
+    // 更新本地用户信息
+    userInfo.value = { ...userInfo.value, like_genres: genres }
+    authStore.updateUserInfo({ ...authStore.userInfo, like_genres: genres })
+    
+    alert('电影偏好更新成功！')
+  } catch (error) {
+    console.error('更新电影偏好失败:', error)
+    alert('更新失败，请稍后重试')
+  } finally {
+    saving.value = false
+  }
+}
+
+// 重置偏好
+const resetPreferences = () => {
+  selectedGenres.value = []
+}
 </script>
 
 <style scoped>
@@ -477,5 +595,210 @@ watch(() => authStore.userInfo, (newUserInfo) => {
     text-align: center;
     gap: 15px;
   }
+
+  .preferences-card {
+    padding: 20px;
+  }
+
+  .genre-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .genre-option {
+    padding: 15px;
+    justify-content: center;
+  }
+
+  .preferences-actions {
+    flex-direction: column;
+  }
+
+  .save-btn,
+  .reset-btn {
+    width: 100%;
+  }
+}
+
+/* 电影偏好设置样式 */
+.preferences-section {
+  margin-top: 40px;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.section-header h2 {
+  font-size: 2rem;
+  color: white;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.section-header p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+}
+
+.preferences-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 30px;
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.current-preferences {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.current-preferences h3 {
+  color: white;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.genre-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.genre-tag {
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.genre-tag.current {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.8), rgba(123, 104, 238, 0.8));
+  color: white;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+}
+
+.genre-selector h3 {
+  color: white;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.genre-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.genre-option {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  gap: 15px;
+  position: relative;
+  color: white;
+}
+
+.genre-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(0, 255, 255, 0.4);
+  transform: translateY(-5px);
+  box-shadow: 
+    0 10px 30px rgba(0, 255, 255, 0.1),
+    0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+.genre-option.selected {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: rgba(0, 255, 255, 0.5);
+  transform: translateY(-5px);
+  box-shadow: 
+    0 10px 30px rgba(0, 255, 255, 0.2),
+    0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+.genre-option::before {
+  content: '🎬';
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.genre-option input {
+  display: none;
+}
+
+.genre-name {
+  font-weight: 500;
+  font-size: 1rem;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+}
+
+.preferences-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.save-btn,
+.reset-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.8), rgba(123, 104, 238, 0.8));
+  color: white;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.save-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(0, 255, 255, 0.4),
+    0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.reset-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.reset-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
+}
+
+.reset-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

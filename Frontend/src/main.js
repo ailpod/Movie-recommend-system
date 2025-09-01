@@ -12,9 +12,9 @@ app.use(router)
 
 app.mount('#app')
 
-// 注释掉自动初始化，改为在需要时手动初始化
-// import { useAuthStore } from './stores/auth'
-// setTimeout(() => {
-//   const authStore = useAuthStore()
-//   authStore.initialize()
-// }, 0)
+// 在应用挂载后初始化认证状态
+import { useAuthStore } from './stores/auth'
+setTimeout(() => {
+  const authStore = useAuthStore()
+  authStore.initialize()
+}, 0)

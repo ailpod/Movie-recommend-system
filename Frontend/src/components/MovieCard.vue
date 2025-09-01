@@ -22,6 +22,11 @@
         <div v-if="movie.avg_rate" class="rating-badge">
           <span class="rating-score">{{ formatRating(movie.avg_rate) }}</span>
         </div>
+
+        <!-- 匹配分数标签 -->
+        <div v-if="showMatchScore && movie.matchScore" class="match-badge">
+          <span class="match-score">{{ movie.matchScore }}%</span>
+        </div>
       </div>
 
       <!-- 电影信息 -->
@@ -56,6 +61,10 @@ const props = defineProps({
     validator: (movie) => {
       return movie && movie.id && movie.title
     }
+  },
+  showMatchScore: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -262,6 +271,22 @@ const handleImageError = (event) => {
   color: #ffd700;
   font-weight: bold;
   font-size: 0.9rem;
+}
+
+.match-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 6px;
+  padding: 4px 8px;
+  backdrop-filter: blur(10px);
+}
+
+.match-score {
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
 }
 
 /* 电影信息区域 */

@@ -104,6 +104,11 @@ export default {
     return apiClient.put('/users/me', profileData);
   },
 
+  // 更新用户信息 (别名)
+  updateUser(userData) {
+    return apiClient.put('/users/me', userData);
+  },
+
   // 更改密码
   changePassword(passwordData) {
     return apiClient.post('/users/me/change-password', passwordData);

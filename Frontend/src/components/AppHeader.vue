@@ -16,19 +16,9 @@
         <router-link to="/" class="nav-link" :class="{ active: $route.name === 'Home' }">
           首页
         </router-link>
-        <div class="nav-dropdown" @mouseenter="showGenres = true" @mouseleave="showGenres = false">
-          <span class="nav-link">分类</span>
-          <div class="dropdown-menu" v-show="showGenres">
-            <router-link 
-              v-for="genre in genres" 
-              :key="genre.id"
-              :to="`/genre/${genre.id}`"
-              class="dropdown-item"
-            >
-              {{ genre.name }}
-            </router-link>
-          </div>
-        </div>
+        <router-link to="/recommend" class="nav-link" :class="{ active: $route.name === 'Recommend' }">
+          推荐
+        </router-link>
       </nav>
 
       <!-- 搜索框 -->

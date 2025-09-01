@@ -214,6 +214,32 @@
             </div>
           </div>
 
+          <!-- 电影偏好选择 -->
+          <div class="form-group">
+            <label class="form-label">电影偏好 (可多选，可跳过)</label>
+            <div class="genre-selection">
+              <div class="genre-grid">
+                <label 
+                  v-for="genre in availableGenres" 
+                  :key="genre" 
+                  class="genre-option"
+                  :class="{ selected: registerForm.like_genres.includes(genre) }"
+                >
+                  <input 
+                    type="checkbox" 
+                    :value="genre" 
+                    v-model="registerForm.like_genres"
+                    :disabled="loading"
+                  >
+                  <span class="genre-name">{{ genre }}</span>
+                </label>
+              </div>
+              <div class="genre-hint">
+                选择您喜欢的电影类型，我们将为您提供个性化推荐
+              </div>
+            </div>
+          </div>
+
           <!-- 错误提示 -->
           <div v-if="error" class="error-message">
             <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -263,8 +289,17 @@ export default {
       email: '',
       password: '',
       age: null,
-      gender: ''
+      gender: '',
+      like_genres: []
     })
+
+    // 可选的电影类型
+    const availableGenres = ref([
+      '动作', '冒险', '喜剧', '剧情', '家庭', '奇幻', 
+      '恐怖', '悬疑', '爱情', '科幻', '惊悚', '战争',
+      '西部', '动画', '犯罪', '纪录片', '历史', '音乐',
+      '运动', '传记', '儿童', '短片'
+    ])
 
     const confirmPassword = ref('')
     const showPassword = ref(false)
@@ -308,7 +343,15 @@ export default {
       error.value = ''
 
       try {
-        await authStore.register(registerForm.value)
+        // 处理电影偏好数据
+        const formData = {
+          ...registerForm.value,
+          like_genres: registerForm.value.like_genres.length > 0 
+            ? registerForm.value.like_genres.join(',') 
+            : ''
+        }
+        
+        await authStore.register(formData)
         router.push('/login')
       } catch (err) {
         error.value = err.response?.data?.detail || '注册失败，请稍后重试'
@@ -332,6 +375,7 @@ export default {
 
     return {
       registerForm,
+      availableGenres,
       confirmPassword,
       showPassword,
       showConfirmPassword,
@@ -558,6 +602,63 @@ export default {
   height: 16px;
 }
 
+/* 电影偏好选择样式 */
+.genre-selection {
+  margin-top: 8px;
+}
+
+.genre-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.genre-option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f9fafb;
+  position: relative;
+  color: #374151;
+}
+
+.genre-option:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  background: #f3f4f6;
+}
+
+.genre-option.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.genre-option input {
+  display: none;
+}
+
+.genre-name {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.genre-hint {
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
+  margin-top: 12px;
+  line-height: 1.4;
+}
+
 .error-message {
   display: flex;
   align-items: center;
@@ -665,6 +766,25 @@ export default {
   
   .gender-label {
     justify-content: center;
+  }
+
+  .genre-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+  }
+
+  .genre-option {
+    padding: 10px 12px;
+    justify-content: center;
+  }
+
+  .genre-name {
+    font-size: 0.9rem;
+  }
+
+  .genre-hint {
+    font-size: 0.8rem;
+    margin-top: 10px;
   }
 }
 </style>

@@ -29,9 +29,26 @@ class UserCRUD:
             email=user.email,
             hashed_password=hashed_password,
             age=getattr(user, 'age', None),
-            gender=getattr(user, 'gender', None)
+            gender=getattr(user, 'gender', None),
+            like_genres=getattr(user, 'like_genres', None)
         )
         db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    
+    @staticmethod
+    def update_user(db: Session, user_id: int, user_data: dict) -> Optional[models.User]:
+        db_user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not db_user:
+            return None
+        
+        # 更新允许的字段
+        allowed_fields = ['username', 'email', 'age', 'gender', 'like_genres']
+        for field, value in user_data.items():
+            if field in allowed_fields and hasattr(db_user, field):
+                setattr(db_user, field, value)
+        
         db.commit()
         db.refresh(db_user)
         return db_user
