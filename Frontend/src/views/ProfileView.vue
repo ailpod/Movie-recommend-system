@@ -54,13 +54,6 @@
           </div>
         </div>
         
-        <div class="info-card" v-if="userInfo?.updated_at">
-          <div class="info-icon">🔄</div>
-          <div class="info-content">
-            <div class="info-label">最后更新</div>
-            <div class="info-value">{{ formatDate(userInfo?.updated_at) }}</div>
-          </div>
-        </div>
       </div>
 
       <!-- 电影偏好设置 -->
@@ -119,6 +112,24 @@
         </div>
       </div>
     </div>
+
+    <!-- 通知组件 -->
+    <div 
+      v-if="notification.show" 
+      class="notification"
+      :class="[`notification-${notification.type}`]"
+    >
+      <div class="notification-content">
+        <div class="notification-icon">
+          <span v-if="notification.type === 'success'"></span>
+          <span v-else-if="notification.type === 'error'"></span>
+          <span v-else-if="notification.type === 'warning'"></span>
+          <span v-else></span>
+        </div>
+        <div class="notification-message">{{ notification.message }}</div>
+        <button @click="hideNotification" class="notification-close">×</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -140,6 +151,13 @@ const favoriteCount = ref(0)
 // 电影偏好相关
 const selectedGenres = ref([])
 const saving = ref(false)
+
+// 通知相关
+const notification = ref({
+  show: false,
+  message: '',
+  type: 'info' // success, error, warning, info
+})
 
 // 可选的电影类型
 const availableGenres = ref([
@@ -284,7 +302,7 @@ watch(() => userInfo.value?.like_genres, (newGenres) => {
 // 更新用户电影偏好
 const updatePreferences = async () => {
   if (selectedGenres.value.length === 0) {
-    alert('请至少选择一个电影类型！')
+    showNotification('请至少选择一个电影类型！', 'warning')
     return
   }
 
@@ -301,12 +319,15 @@ const updatePreferences = async () => {
     
     // 更新本地用户信息
     userInfo.value = { ...userInfo.value, like_genres: genres }
-    authStore.updateUserInfo({ ...authStore.userInfo, like_genres: genres })
+    // 直接更新 auth store 中的用户数据
+    if (authStore.user) {
+      authStore.user.like_genres = genres
+    }
     
-    alert('电影偏好更新成功！')
+    showNotification('更新成功！', 'success')
   } catch (error) {
     console.error('更新电影偏好失败:', error)
-    alert('更新失败，请稍后重试')
+    showNotification('更新失败', 'error')
   } finally {
     saving.value = false
   }
@@ -315,6 +336,23 @@ const updatePreferences = async () => {
 // 重置偏好
 const resetPreferences = () => {
   selectedGenres.value = []
+}
+
+// 通知相关方法
+const showNotification = (message, type = 'info') => {
+  notification.value = {
+    show: true,
+    message,
+    type
+  }
+  // 3秒后自动隐藏
+  setTimeout(() => {
+    hideNotification()
+  }, 3000)
+}
+
+const hideNotification = () => {
+  notification.value.show = false
 }
 </script>
 
@@ -578,6 +616,19 @@ const resetPreferences = () => {
     width: 50px;
     height: 50px;
   }
+
+  .genre-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .genre-option {
+    padding: 12px 8px;
+  }
+
+  .genre-name {
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -695,7 +746,7 @@ const resetPreferences = () => {
 
 .genre-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 15px;
   margin-bottom: 30px;
 }
@@ -703,16 +754,17 @@ const resetPreferences = () => {
 .genre-option {
   display: flex;
   align-items: center;
-  padding: 20px;
+  justify-content: center;
+  padding: 15px 10px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(0, 255, 255, 0.2);
-  border-radius: 15px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
-  gap: 15px;
   position: relative;
   color: white;
+  text-align: center;
 }
 
 .genre-option:hover {
@@ -727,16 +779,10 @@ const resetPreferences = () => {
 .genre-option.selected {
   background: rgba(0, 255, 255, 0.1);
   border-color: rgba(0, 255, 255, 0.5);
-  transform: translateY(-5px);
+  transform: translateY(-3px);
   box-shadow: 
-    0 10px 30px rgba(0, 255, 255, 0.2),
-    0 0 20px rgba(0, 255, 255, 0.2);
-}
-
-.genre-option::before {
-  content: '🎬';
-  font-size: 1.5rem;
-  flex-shrink: 0;
+    0 6px 20px rgba(0, 255, 255, 0.2),
+    0 0 15px rgba(0, 255, 255, 0.15);
 }
 
 .genre-option input {
@@ -745,7 +791,7 @@ const resetPreferences = () => {
 
 .genre-name {
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.95rem;
   text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
 }
 
@@ -800,5 +846,96 @@ const resetPreferences = () => {
 .reset-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* 通知组件样式 */
+.notification {
+  position: fixed;
+  top: 120px;
+  right: 20px;
+  z-index: 1000;
+  min-width: 300px;
+  max-width: 400px;
+  border-radius: 12px;
+  backdrop-filter: blur(15px);
+  border: 1px solid;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(0, 0, 0, 0.1);
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification-success {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.5);
+  color: rgba(34, 197, 94, 1);
+}
+
+.notification-error {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: rgba(239, 68, 68, 1);
+}
+
+.notification-warning {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: rgba(245, 158, 11, 1);
+}
+
+.notification-info {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: rgba(59, 130, 246, 1);
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  gap: 12px;
+}
+
+.notification-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.notification-message {
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-close:hover {
+  opacity: 1;
 }
 </style>
