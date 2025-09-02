@@ -5,8 +5,8 @@
       <div class="logo-section">
         <router-link to="/" class="logo-link">
           <div class="logo">
-            <span class="logo-icon">🎬</span>
-            <span class="logo-text">影视推荐</span>
+            <span class="logo-icon"></span>
+            <span class="logo-text">MovieSystem</span>
           </div>
         </router-link>
       </div>

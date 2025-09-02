@@ -68,6 +68,7 @@ class MovieBase(BaseModel):
     release_year: Optional[int] = Field(None, ge=1900, le=2030)
     director: Optional[str] = Field(None, max_length=100)
     actors: Optional[str] = None
+    keyword: Optional[str] = None  # 关键词，逗号分隔
 
 class MovieCreate(MovieBase):
     pass
@@ -80,6 +81,7 @@ class MovieUpdate(BaseModel):
     release_year: Optional[int] = Field(None, ge=1900, le=2030)
     director: Optional[str] = Field(None, max_length=100)
     actors: Optional[str] = None
+    keyword: Optional[str] = None  # 关键词，逗号分隔
 
 class Movie(MovieBase):
     model_config = ConfigDict(from_attributes=True)
@@ -105,6 +107,7 @@ class MovieSimple(BaseModel):
     avg_rate: Optional[float] = 0.0
     genres: Optional[str] = None
     release_year: Optional[int] = None
+    keyword: Optional[str] = None  # 关键词，逗号分隔
     
     @field_validator('genres', mode='before')
     @classmethod

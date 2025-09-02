@@ -40,6 +40,7 @@ class Movie(Base):
     director = Column(String(100))  # 导演
     actors = Column(Text)  # 演员列表，逗号分隔
     vote = Column(Integer, default=0)  # 投票数量
+    keyword = Column(Text)  # 关键词，逗号分隔
     
     # 关联关系
     history_entries = relationship("BrowsingHistory", back_populates="movie")

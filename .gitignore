@@ -48,6 +48,15 @@ venv.bak/
 
 # Database files
 *.db
+
+# Temporary script files
+*_temp.py
+check_*.py
+remove_*.py
+list_*.py
+import_movies.py
+add_keyword_column.py
+*_duplicates.py
 # 但是保留推荐系统的数据库文件
 !Backend/Recommend.db
 *.sqlite
