@@ -52,7 +52,7 @@ apiClient.interceptors.response.use(
 );
 
 // API方法集合
-export default {
+export const movieApi = {
   // 获取热门电影
   getPopularMovies(page = 1) {
     return apiClient.get(`/movies/popular?page=${page}`);
@@ -68,44 +68,40 @@ export default {
     return apiClient.get(`/movies/latest?page=${page}`);
   },
 
+  // 获取带筛选的电影列表
+  getMoviesWithFilters(params) {
+    const queryString = new URLSearchParams(params).toString();
+    return apiClient.get(`/movies?${queryString}`);
+  },
+
   // 根据ID获取电影详情
   getMovieById(id) {
-    return apiClient.get(`/movie/${id}`);
+    return apiClient.get(`/movies/${id}`);
   },
 
   // 获取电影推荐
-  getRecommendations(id, limit = 10) {
-    return apiClient.get(`/movie/${id}/recommendations?limit=${limit}`);
+  getMovieRecommendations(id, limit = 10) {
+    return apiClient.get(`/movies/${id}/recommendations?limit=${limit}`);
   },
 
   // 搜索电影
   searchMovies(query, page = 1) {
-    return apiClient.get(`/search?q=${encodeURIComponent(query)}&page=${page}`);
+    return apiClient.get(`/movies/search?q=${encodeURIComponent(query)}&page=${page}`);
   },
 
   // 获取电影类型列表
   getGenres() {
-    return apiClient.get('/genres');
+    return apiClient.get('/movies/genres');
   },
 
   // 根据类型获取电影
-  getMoviesByGenre(genreId, page = 1) {
-    return apiClient.get(`/movies/genre/${genreId}?page=${page}`);
+  getMoviesByGenre(genre, page = 1) {
+    return apiClient.get(`/movies/genre/${encodeURIComponent(genre)}?page=${page}`);
   },
 
-  // 获取推荐电影（基于搜索关键词）
-  getRecommendations(query) {
-    return apiClient.get(`/movies/recommendations?q=${encodeURIComponent(query)}`);
-  },
-
-  // 获取演员信息
-  getActorInfo(actorId) {
-    return apiClient.get(`/actor/${actorId}`);
-  },
-
-  // 获取导演信息
-  getDirectorInfo(directorId) {
-    return apiClient.get(`/director/${directorId}`);
+  // 获取用户个性化推荐
+  getUserRecommendations(limit = 10) {
+    return apiClient.get(`/movies/recommendations/for-me?limit=${limit}`);
   }
 };
 
@@ -170,3 +166,6 @@ export const formatRuntime = (minutes) => {
   }
   return `${mins}分钟`;
 };
+
+// 默认导出（保持向后兼容）
+export default movieApi;

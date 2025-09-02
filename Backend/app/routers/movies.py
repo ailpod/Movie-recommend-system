@@ -34,10 +34,30 @@ router = APIRouter(prefix="/movies", tags=["电影"])
 async def get_movies(
     skip: int = Query(0, ge=0, description="跳过的记录数"),
     limit: int = Query(20, ge=1, le=100, description="返回的记录数"),
+    sort_by: Optional[str] = Query("popular", description="排序方式: popular, top_rated, latest, vote, title"),
+    genre: Optional[str] = Query(None, description="电影类型筛选"),
+    year_start: Optional[int] = Query(None, description="起始年份"),
+    year_end: Optional[int] = Query(None, description="结束年份"),
+    rating_min: Optional[float] = Query(None, description="最低评分"),
+    rating_max: Optional[float] = Query(None, description="最高评分"),
+    vote_min: Optional[int] = Query(None, description="最低投票数"),
+    vote_max: Optional[int] = Query(None, description="最高投票数"),
     db: Session = Depends(get_db)
 ):
-    """获取电影列表"""
-    return movie_crud.get_movies(db, skip=skip, limit=limit)
+    """获取电影列表，支持多种筛选和排序"""
+    return movie_crud.get_movies_with_filters(
+        db, 
+        skip=skip, 
+        limit=limit,
+        sort_by=sort_by,
+        genre=genre,
+        year_start=year_start,
+        year_end=year_end,
+        rating_min=rating_min,
+        rating_max=rating_max,
+        vote_min=vote_min,
+        vote_max=vote_max
+    )
 
 @router.get("/popular", response_model=List[Movie])
 async def get_popular_movies(

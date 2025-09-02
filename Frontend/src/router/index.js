@@ -50,6 +50,14 @@ const routes = [
     }
   },
   {
+    path: '/browse',
+    name: 'Browse',
+    component: () => import('../views/BrowseView.vue'),
+    meta: {
+      title: '电影浏览 - 电影推荐系统'
+    }
+  },
+  {
     path: '/recommend',
     name: 'Recommend',
     component: () => import('../views/RecommendView.vue'),

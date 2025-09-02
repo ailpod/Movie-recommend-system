@@ -71,6 +71,81 @@ class MovieCRUD:
         return db.query(models.Movie).offset(skip).limit(limit).all()
     
     @staticmethod
+    def get_movies_with_filters(
+        db: Session, 
+        skip: int = 0, 
+        limit: int = 100,
+        sort_by: str = "popular",
+        genre: Optional[str] = None,
+        year_start: Optional[int] = None,
+        year_end: Optional[int] = None,
+        rating_min: Optional[float] = None,
+        rating_max: Optional[float] = None,
+        vote_min: Optional[int] = None,
+        vote_max: Optional[int] = None
+    ) -> List[models.Movie]:
+        """获取带筛选和排序的电影列表"""
+        query = db.query(models.Movie)
+        
+        # 应用筛选条件
+        if genre:
+            query = query.filter(models.Movie.genres.contains(genre))
+        
+        if year_start:
+            query = query.filter(models.Movie.release_year >= year_start)
+        
+        if year_end:
+            query = query.filter(models.Movie.release_year <= year_end)
+        
+        if rating_min:
+            query = query.filter(models.Movie.avg_rate >= rating_min)
+        
+        if rating_max:
+            query = query.filter(models.Movie.avg_rate <= rating_max)
+        
+        if vote_min:
+            query = query.filter(models.Movie.vote >= vote_min)
+        
+        if vote_max:
+            query = query.filter(models.Movie.vote <= vote_max)
+        
+        # 应用排序
+        if sort_by == "popular":
+            # 热门：投票数大于10000且评分大于7，按投票数排序
+            query = query.filter(
+                and_(
+                    models.Movie.vote > 10000,
+                    models.Movie.avg_rate > 7.0
+                )
+            ).order_by(models.Movie.vote.desc())
+        elif sort_by == "top_rated":
+            # 高分：投票数大于5000，按评分排序
+            query = query.filter(models.Movie.vote > 5000).order_by(models.Movie.avg_rate.desc())
+        elif sort_by == "latest":
+            # 最新：综合时间和评分
+            query = query.filter(
+                and_(
+                    models.Movie.release_year.isnot(None),
+                    models.Movie.avg_rate.isnot(None)
+                )
+            ).order_by(
+                (
+                    ((models.Movie.release_year - 1900) / 125.0) * 0.8 +
+                    ((models.Movie.avg_rate - 1.0) / 9.0) * 0.2
+                ).desc()
+            )
+        elif sort_by == "vote":
+            query = query.order_by(models.Movie.vote.desc())
+        elif sort_by == "rating":
+            query = query.order_by(models.Movie.avg_rate.desc())
+        elif sort_by == "title":
+            query = query.order_by(models.Movie.title)
+        elif sort_by == "year":
+            query = query.order_by(models.Movie.release_year.desc())
+        
+        return query.offset(skip).limit(limit).all()
+    
+    @staticmethod
     def search_movies(db: Session, title: str = None, genre: str = None, skip: int = 0, limit: int = 100) -> List[models.Movie]:
         query = db.query(models.Movie)
         

@@ -16,6 +16,9 @@
         <router-link to="/" class="nav-link" :class="{ active: $route.name === 'Home' }">
           首页
         </router-link>
+        <router-link to="/browse" class="nav-link" :class="{ active: $route.name === 'Browse' }">
+          浏览
+        </router-link>
         <router-link to="/recommend" class="nav-link" :class="{ active: $route.name === 'Recommend' }">
           推荐
         </router-link>
