@@ -112,5 +112,10 @@ export default {
   // 更改密码
   changePassword(passwordData) {
     return apiClient.post('/users/me/change-password', passwordData);
+  },
+
+  // 获取个性化推荐
+  getPersonalizedRecommendations() {
+    return apiClient.get('/users/me/recommendations');
   }
 };

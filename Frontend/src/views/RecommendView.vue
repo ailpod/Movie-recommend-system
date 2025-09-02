@@ -3,20 +3,21 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <h1 class="page-title">🌟个性化推荐</h1>
-      <p class="page-subtitle">根据您的喜好精选的 {{ recommendedMovies.length }} 部电影</p>
-      
+      <p class="page-subtitle">依据来源于观影历史、收藏和偏好</p>
+    </div>
+
     <!-- 推荐算法状态 -->
-      <div class="recommendation-status">
-        <div v-if="!userPreferences" class="no-preferences">
-          <div class="empty-state">
-            <div class="empty-icon">🎭</div>
-            <h3>还没有设置电影偏好</h3>
-            <p>请先在个人资料页面设置您喜欢的电影类型，我们将为您提供个性化推荐</p>
-            <router-link to="/profile" class="btn btn-primary">
-              <i class="icon">⚙️</i>
-              去设置偏好
-            </router-link>
-          </div>
+    <div class="recommendation-status">
+      <div v-if="!userPreferences" class="no-preferences">
+        <div class="empty-state">
+          <div class="empty-icon">🎭</div>
+          <h3>还没有设置电影偏好</h3>
+          <p>请先在个人资料页面设置您喜欢的电影类型</p>
+          <router-link to="/profile" class="btn btn-primary">
+            <i class="icon">⚙️</i>
+            去设置偏好
+          </router-link>
+        </div>
       </div>
       
       <div v-else class="preferences-display">
@@ -28,158 +29,107 @@
         </div>
       </div>
     </div>
-    </div>
 
-
- <!-- 推荐算法说明 -->
-    <div class="algorithm-info">
-      <details class="info-details">
-        <summary>🧠 推荐算法说明</summary>
-        <div class="info-content">
-          <h4>我们的推荐基于以下因素：</h4>
-          <ul>
-            <li>🎭 您设置的电影类型偏好</li>
-            <li>⭐ 电影之间的相关度</li>
-            <li>👥 您的收藏与浏览</li>
-            <li>🔥 电影的热门程度</li>
-          </ul>
-          <p class="note">
-            推荐算法会持续学习和优化，为您提供更精准的个性化推荐。
-          </p>
-        </div>
-      </details>
-    </div>
 
     <!-- 推荐电影列表 -->
-    <div v-if="userPreferences" class="recommendation-section">
+    <div class="movies-section">
+      <div class="section-header">
+        <h2>为您推荐</h2>
+        <p>基于智能算法精选的 {{ recommendations.length }} 部电影</p>
+        <button @click="refreshRecommendations" class="refresh-btn" :disabled="loading">
+          <i class="icon">🔄</i>
+          {{ loading ? '刷新中...' : '换一批推荐' }}
+        </button>
+      </div>
+
       <!-- 加载状态 -->
       <div v-if="loading" class="loading-state">
         <div class="loading-spinner"></div>
-        <p>正在为您生成个性化推荐...</p>
+        <p class="loading-text">正在为您计算专属推荐...</p>
       </div>
 
       <!-- 推荐电影网格 -->
-      <div v-else-if="recommendedMovies.length > 0" class="movies-grid">
+      <div v-else-if="recommendations.length > 0" class="movies-grid">
         <MovieCard 
-          v-for="movie in recommendedMovies" 
+          v-for="movie in recommendations" 
           :key="movie.id" 
           :movie="movie"
-          :show-match-score="true"
         />
       </div>
 
       <!-- 无推荐结果 -->
-      <div v-else class="no-results">
+      <div v-else class="no-movies">
         <div class="empty-state">
-          <div class="empty-icon">🔍</div>
+          <div class="no-movies-icon">🔍</div>
           <h3>暂无推荐内容</h3>
-          <p>我们正在完善推荐算法，稍后再来看看吧！</p>
+          <p>多收藏和浏览一些电影，可以帮助我们更好地了解您的喜好！</p>
+          <router-link to="/browse" class="btn btn-primary">
+            <i class="icon">🎬</i>
+            去浏览电影
+          </router-link>
         </div>
       </div>
     </div>
+    
   </div>
 </template>
 
-<script>
-import { ref, onMounted, computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import MovieCard from '@/components/MovieCard.vue'
-import movieApi from '@/services/movieApi'
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import userApi from '@/services/userApi';
+import MovieCard from '@/components/MovieCard.vue';
 
-export default {
-  name: 'RecommendView',
-  components: {
-    MovieCard
-  },
-  setup() {
-    const authStore = useAuthStore()
-    const loading = ref(false)
-    const recommendedMovies = ref([])
-    const allMovies = ref([])
+const authStore = useAuthStore();
+const recommendations = ref([]);
+const loading = ref(true);
 
-    // 用户偏好
-    const userPreferences = computed(() => {
-      return authStore.user?.like_genres
-    })
+// 用户偏好
+const userPreferences = computed(() => {
+  return authStore.user?.like_genres
+});
 
-    // 获取所有电影
-    const fetchAllMovies = async () => {
-      try {
-        const response = await movieApi.getMovies()
-        allMovies.value = response.data
-      } catch (error) {
-        console.error('获取电影列表失败:', error)
-      }
+const fetchRecommendations = async () => {
+  try {
+    console.log("开始获取个性化推荐...");
+    loading.value = true;
+    const response = await userApi.getPersonalizedRecommendations();
+    console.log("API响应:", response);
+    
+    // 处理响应数据
+    if (response && response.data) {
+      recommendations.value = response.data;
+    } else if (Array.isArray(response)) {
+      recommendations.value = response;
+    } else {
+      recommendations.value = [];
     }
-
-    // 生成推荐
-    const generateRecommendations = () => {
-      if (!userPreferences.value || allMovies.value.length === 0) {
-        return
-      }
-
-      loading.value = true
-
-      try {
-        // 用户喜欢的类型
-        const likedGenres = userPreferences.value.split(',').map(g => g.trim())
-        
-        // 计算电影匹配分数
-        const moviesWithScore = allMovies.value.map(movie => {
-          let score = 0
-          const movieGenres = movie.genres ? movie.genres.split(',').map(g => g.trim()) : []
-          
-          // 类型匹配分数 (40%)
-          const genreMatches = likedGenres.filter(liked => 
-            movieGenres.some(movieGenre => movieGenre.includes(liked) || liked.includes(movieGenre))
-          ).length
-          score += (genreMatches / likedGenres.length) * 40
-
-          // 评分分数 (30%)
-          score += (movie.avg_rate / 10) * 30
-
-          // 热门度分数 (20%)
-          const maxVotes = Math.max(...allMovies.value.map(m => m.vote))
-          score += (movie.vote / maxVotes) * 20
-
-          // 随机因子 (10%) - 增加推荐多样性
-          score += Math.random() * 10
-
-          return {
-            ...movie,
-            matchScore: Math.round(score)
-          }
-        })
-
-        // 排序并获取推荐
-        recommendedMovies.value = moviesWithScore
-          .filter(movie => movie.matchScore > 20) // 过滤低分电影
-          .sort((a, b) => b.matchScore - a.matchScore)
-          .slice(0, 12) // 取前12部电影
-
-      } catch (error) {
-        console.error('生成推荐失败:', error)
-      } finally {
-        loading.value = false
-      }
+    
+    console.log("推荐结果:", recommendations.value);
+  } catch (error) {
+    console.error("获取个性化推荐失败:", error);
+    // 显示错误详情
+    if (error.response) {
+      console.error("错误状态:", error.response.status);
+      console.error("错误信息:", error.response.data);
     }
-
-    // 页面加载时执行
-    onMounted(async () => {
-      if (authStore.user) {
-        await fetchAllMovies()
-        generateRecommendations()
-      }
-    })
-
-    return {
-      loading,
-      recommendedMovies,
-      userPreferences,
-      generateRecommendations
-    }
+  } finally {
+    loading.value = false;
   }
-}
+};
+
+// 刷新推荐
+const refreshRecommendations = () => {
+  fetchRecommendations();
+};
+
+onMounted(() => {
+  if (authStore.user) {
+    fetchRecommendations();
+  } else {
+    loading.value = false;
+  }
+});
 </script>
 
 <style scoped>
@@ -278,6 +228,7 @@ export default {
   border-radius: 20px;
   padding: 30px;
   border: 1px solid rgba(0, 255, 255, 0.2);
+  text-align: center;
 }
 
 .empty-state {
@@ -343,6 +294,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  justify-content: center;
 }
 
 .genre-tag {
@@ -356,86 +308,8 @@ export default {
   text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
 }
 
-.section-header {
-  margin-bottom: 30px;
-  text-align: center;
-}
-
-.section-header h2 {
-  font-size: 1.8rem;
-  color: white;
-  margin-bottom: 10px;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-}
-
-.section-header p {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.loading-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: white;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-top: 4px solid rgba(0, 255, 255, 0.8);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
-}
-
-.movies-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 20px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.movies-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 40px;
-}
-
-.no-results {
-  padding: 60px 20px;
-}
-
 .algorithm-info {
-  margin-top: 60px;
-  background: #f9fafb;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.movies-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 40px;
-}
-
-.no-results {
-  padding: 60px 20px;
-  text-align: center;
-  color: white;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(15px);
-  border-radius: 20px;
-  border: 1px solid rgba(0, 255, 255, 0.2);
-}
-
-.algorithm-info {
-  margin-top: 60px;
+  margin: 30px 20px;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(15px);
   border-radius: 16px;
@@ -454,6 +328,7 @@ export default {
   user-select: none;
   outline: none;
   text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  font-size: 1.1rem;
 }
 
 .info-details summary:hover {
@@ -481,6 +356,7 @@ export default {
 .info-content li {
   margin-bottom: 8px;
   color: rgba(255, 255, 255, 0.8);
+  padding: 5px 0;
 }
 
 .note {
@@ -493,7 +369,124 @@ export default {
   margin: 0;
 }
 
+.movies-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.section-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.section-header h2 {
+  font-size: 1.8rem;
+  color: white;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.section-header p {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 20px;
+}
+
+.refresh-btn {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.8), rgba(123, 104, 238, 0.8));
+  color: white;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(0, 255, 255, 0.4),
+    0 0 20px rgba(0, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.9), rgba(123, 104, 238, 0.9));
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.refresh-btn .icon {
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: white;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top: 4px solid rgba(0, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+.loading-text {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.movies-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.no-movies {
+  padding: 60px 20px;
+  text-align: center;
+  color: white;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.no-movies-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.3));
+}
+
 /* 响应式设计 */
+@media (max-width: 1200px) {
+  .movies-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+}
+
 @media (max-width: 768px) {
   .page-title {
     font-size: 2.2rem;
@@ -504,7 +497,7 @@ export default {
   }
   
   .movies-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
   }
   
@@ -522,6 +515,11 @@ export default {
 @media (max-width: 480px) {
   .page-title {
     font-size: 1.8rem;
+  }
+  
+  .movies-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
   
   .recommendation-status {

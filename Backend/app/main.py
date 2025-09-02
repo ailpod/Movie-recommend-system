@@ -10,6 +10,7 @@ import uuid
 import json
 import os
 import pickle
+import pandas as pd
 from contextlib import asynccontextmanager
 
 from .core.config import get_settings
@@ -22,6 +23,7 @@ settings = get_settings()
 
 # --- 用于存放加载好的模型 ---
 recommendation_models = {}
+models = recommendation_models
 
 
 @asynccontextmanager
@@ -78,6 +80,20 @@ def load_recommendation_models():
         # 设置推荐工具的模型引用
         from .services.recommendation_utils import set_recommendation_models
         set_recommendation_models(recommendation_models)
+        
+        # --- 👇 在加载pkl文件后，新增这部分代码 👇 ---
+        print("正在加载全量电影数据用于类型匹配...")
+        # 我们需要加载那个原始的JSON数据文件
+        json_file_path = os.path.join(base_dir, "..", "static", "tmdb_1000_movies.json")
+        try:
+            # 将JSON加载为Pandas DataFrame并存入models字典
+            df_raw = pd.read_json(json_file_path)
+            # 只保留模型中存在的电影数据，确保一致性
+            movie_titles_in_model = recommendation_models['indices'].index
+            recommendation_models['all_movies_df'] = df_raw[df_raw['title'].isin(movie_titles_in_model)].copy()
+            print("✅ 全量电影数据加载成功！")
+        except Exception as e:
+            print(f"🚨 错误：加载全量电影数据时发生错误: {e}")
         
     except FileNotFoundError as e:
         print(f"警告：推荐模型文件未找到 - {e}")

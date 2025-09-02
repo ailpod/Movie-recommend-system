@@ -223,6 +223,13 @@ class MovieCRUD:
         db.commit()
         db.refresh(db_movie)
         return db_movie
+    
+    @staticmethod
+    def get_movies_by_titles(db: Session, titles: List[str]) -> List[models.Movie]:
+        """根据电影标题列表获取电影"""
+        return db.query(models.Movie).filter(
+            models.Movie.title.in_(titles)
+        ).all()
 
 # 创建 CRUD 实例
 user_crud = UserCRUD()
