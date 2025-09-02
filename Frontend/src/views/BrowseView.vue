@@ -3,7 +3,7 @@
     <!-- 英雄区域 -->
     <section class="hero-section">
       <div class="hero-content">
-        <h1 class="hero-title">电影浏览</h1>
+        <h3 class="hero-title">电影浏览</h3>
         <p class="hero-subtitle">发现更多精彩电影，享受观影乐趣</p>
       </div>
       <div class="hero-background">
@@ -328,14 +328,14 @@ body, html {
 /* 英雄区域 */
 .hero-section {
   position: relative;
-  height: 70vh;
-  min-height: 500px;
+  height: 45vh;
+  min-height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   overflow: hidden;
-  margin-bottom: 10vh; 
+  margin-bottom: 8vh; 
 }
 
 .hero-background {
@@ -428,8 +428,8 @@ body, html {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(15px);
   border-radius: 20px;
-  padding: 40px;
-  margin-bottom: 40px;
+  padding: 30px;
+  margin-bottom: 30px;
   border: 1px solid rgba(0, 255, 255, 0.2);
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.3),
@@ -438,7 +438,7 @@ body, html {
 
 .card-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 }
 
 .card-title {
@@ -479,21 +479,21 @@ body, html {
 .filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 25px;
-  margin-bottom: 30px;
+  gap: 15px;
+  margin-bottom: 25px;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .filter-label {
   font-weight: 600;
   color: white;
   font-size: 0.95rem;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 
 .filter-select,
@@ -524,7 +524,7 @@ body, html {
 .range-inputs {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .range-separator {

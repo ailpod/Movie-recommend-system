@@ -257,18 +257,18 @@ onUnmounted(() => {
   color: white;
   background: rgba(255, 255, 255, 0.1);
 }
-
+/* 
 .nav-link.active::after {
   content: '';
   position: absolute;
-  bottom: -20px;
+  bottom: -39px;
   left: 50%;
   transform: translateX(-50%);
   width: 30px;
   height: 3px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 2px;
-}
+} */
 
 /* 下拉菜单 */
 .nav-dropdown {

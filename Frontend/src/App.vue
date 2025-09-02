@@ -19,8 +19,8 @@ import AppHeader from './components/AppHeader.vue'
 }
 
 .main-content {
-  padding: 20px;
-  padding-top: 100px; /* 为固定导航栏留出空间 */
+  padding: 10px;
+  padding-top: 70px; /* 为固定导航栏留出空间 */
   max-width: 1200px;
   margin: 0 auto;
 }

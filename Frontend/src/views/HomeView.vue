@@ -281,8 +281,8 @@ body, html {
 /* 英雄区域 */
 .hero-section {
   position: relative;
-  height: 70vh;
-  min-height: 500px;
+  height: 50vh;
+  min-height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
