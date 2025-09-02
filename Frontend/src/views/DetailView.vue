@@ -101,7 +101,7 @@
           </div>
 
           <!-- 推荐电影列表 -->
-          <div v-else-if="recommendedMovies.length > 0" class="recommendations-grid">
+          <div v-if="recommendedMovies.length > 0" class="recommendations-grid">
             <div 
               v-for="movie in recommendedMovies" 
               :key="'rec-' + movie.id" 
@@ -133,7 +133,7 @@
           </div>
 
           <!-- 无推荐时的提示 -->
-          <div v-else class="no-recommendations">
+          <div v-if="!recommendationsLoading && recommendedMovies.length === 0" class="no-recommendations">
             <p>暂无相关推荐</p>
           </div>
         </div>
@@ -318,30 +318,41 @@ const getRecommendations = async () => {
   recommendationsLoading.value = true
   
   try {
-    // 基于当前电影获取推荐
-    let response
-    
-    if (movie.value?.genre) {
-      // 如果有电影类型，获取同类型推荐
-      response = await movieApi.getPopularMovies(1, 20)
-    } else {
-      // 否则获取热门推荐
-      response = await movieApi.getPopularMovies(1, 20)
+    if (!movie.value?.id) {
+      recommendedMovies.value = []
+      return
     }
+
+    // 使用基于相似度的推荐API
+    const response = await movieApi.getSimilarMovies(movie.value.id, 5)
     
-    // 处理推荐数据，排除当前电影
-    let recommendations = Array.isArray(response) ? response : (response.results || response.data || [])
+    // 处理推荐数据 - 直接使用响应，因为axios拦截器已经返回了data
+    let recommendations = Array.isArray(response) ? response : []
     
-    // 过滤掉当前电影，取前5个
-    recommendations = recommendations
-      .filter(recMovie => recMovie.id !== movie.value?.id)
-      .slice(0, 5)
+    // 确保只取前5个推荐
+    recommendations = recommendations.slice(0, 5)
     
     recommendedMovies.value = recommendations
     
   } catch (err) {
-    console.error('获取推荐失败:', err)
-    recommendedMovies.value = []
+    console.error('获取相似电影推荐失败:', err)
+    
+    // 降级方案：获取热门电影作为推荐（排除当前电影）
+    try {
+      const fallbackResponse = await movieApi.getPopularMovies(1, 20)
+      let fallbackRecommendations = Array.isArray(fallbackResponse) ? fallbackResponse : (fallbackResponse.results || fallbackResponse.data || [])
+      
+      // 过滤掉当前电影，取前5个
+      fallbackRecommendations = fallbackRecommendations
+        .filter(recMovie => recMovie.id !== movie.value?.id)
+        .slice(0, 5)
+      
+      recommendedMovies.value = fallbackRecommendations
+      
+    } catch (fallbackErr) {
+      console.error('降级推荐也失败了:', fallbackErr)
+      recommendedMovies.value = []
+    }
   } finally {
     recommendationsLoading.value = false
   }

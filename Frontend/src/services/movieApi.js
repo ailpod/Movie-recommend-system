@@ -84,6 +84,11 @@ export const movieApi = {
     return apiClient.get(`/movies/${id}/recommendations?limit=${limit}`);
   },
 
+  // 获取相似电影
+  getSimilarMovies(id, limit = 10) {
+    return apiClient.get(`/movies/${id}/similar?limit=${limit}`);
+  },
+
   // 搜索电影
   searchMovies(query, page = 1) {
     return apiClient.get(`/movies/search?q=${encodeURIComponent(query)}&page=${page}`);

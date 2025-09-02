@@ -160,6 +160,24 @@ async def get_movie_recommendations(
     recommendation_service = RecommendationService(db)
     return recommendation_service.get_similar_movies(movie_id, limit)
 
+@router.get("/{movie_id}/similar", response_model=List[Movie])
+async def get_similar_movies(
+    movie_id: int,
+    limit: int = Query(10, ge=1, le=50, description="相似电影数量"),
+    db: Session = Depends(get_db)
+):
+    """
+    根据给定的电影ID，返回最相似的电影列表。
+    加载.pkl模型，计算出与该电影最相似的电影，并返回它们的完整信息。
+    """
+    # 先检查电影是否存在
+    movie = movie_crud.get_movie(db, movie_id=movie_id)
+    if movie is None:
+        raise HTTPException(status_code=404, detail="Movie not found")
+    
+    recommendation_service = RecommendationService(db)
+    return recommendation_service.get_similar_movies(movie_id, limit)
+
 @router.post("/", response_model=Movie)
 async def create_movie(
     movie: MovieCreate,

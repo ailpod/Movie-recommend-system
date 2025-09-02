@@ -1,9 +1,10 @@
-# 推荐算法服务（占位）
+# 推荐算法服务
 from typing import List
 from sqlalchemy.orm import Session
 
 from ..models import models
 from ..crud import movie_crud
+from .recommendation_utils import get_movie_recommendations, is_recommendation_available
 
 class RecommendationService:
     """电影推荐服务"""
@@ -35,19 +36,43 @@ class RecommendationService:
         """
         获取相似电影推荐
         
-        TODO: 实现基于内容的相似度算法
-        - 基于类型相似度
-        - 基于导演、演员相似度
-        - 基于用户评分模式
-        
-        目前返回同类型的其他电影作为占位
+        使用训练好的相似度模型进行推荐
         """
         target_movie = movie_crud.get_movie(self.db, movie_id)
-        if not target_movie or not target_movie.genre:
+        if not target_movie:
+            return []
+        
+        # 如果推荐模型可用，使用基于内容的推荐
+        if is_recommendation_available():
+            try:
+                # 使用电影标题获取推荐
+                recommendations = get_movie_recommendations(target_movie.title, limit)
+                
+                if recommendations:
+                    # 根据推荐的电影标题从数据库获取完整信息
+                    recommended_movies = []
+                    for title, similarity_score in recommendations:
+                        # 在数据库中查找推荐的电影
+                        movie = self.db.query(models.Movie).filter(
+                            models.Movie.title == title
+                        ).first()
+                        
+                        if movie:
+                            # 添加相似度分数作为额外信息（可选）
+                            movie.similarity_score = similarity_score
+                            recommended_movies.append(movie)
+                    
+                    return recommended_movies[:limit]
+                    
+            except Exception as e:
+                print(f"推荐模型调用失败: {e}")
+        
+        # 降级方案：基于类型的简单推荐
+        if not target_movie.genres:
             return []
         
         similar_movies = self.db.query(models.Movie).filter(
-            models.Movie.genre.contains(target_movie.genre),
+            models.Movie.genres.contains(target_movie.genres),
             models.Movie.id != movie_id
         ).limit(limit).all()
         

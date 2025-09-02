@@ -8,6 +8,8 @@ from fastapi.staticfiles import StaticFiles
 import time
 import uuid
 import json
+import os
+import pickle
 from contextlib import asynccontextmanager
 
 from .core.config import get_settings
@@ -18,15 +20,76 @@ from .routers.user_actions import router as user_actions_router
 
 settings = get_settings()
 
+# --- 用于存放加载好的模型 ---
+recommendation_models = {}
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     # 启动时执行
+    print("应用启动中...")
+    
     # 安全的数据库初始化
     init_database()
+    
+    # 加载推荐模型
+    load_recommendation_models()
+    
     yield
+    
     # 关闭时执行
+    recommendation_models.clear()
+    print("应用关闭，模型卸载")
+
+
+def load_recommendation_models():
+    """加载推荐模型"""
+    print("正在加载推荐模型...")
+    
+    # 构建模型文件的绝对路径 (相对于 main.py)
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    similarity_model_path = os.path.join(base_dir, "..", "algorithm", "movie_similarity.pkl")
+    indices_path = os.path.join(base_dir, "..", "algorithm", "movie_indices.pkl")
+    
+    try:
+        # 检查文件是否存在
+        if not os.path.exists(similarity_model_path):
+            print(f"相似度模型文件未找到: {similarity_model_path}")
+            return
+            
+        if not os.path.exists(indices_path):
+            print(f"索引文件未找到: {indices_path}")
+            return
+        
+        # 加载相似度矩阵
+        with open(similarity_model_path, 'rb') as f:
+            recommendation_models['cosine_sim'] = pickle.load(f)
+        print(f"✅ 相似度矩阵加载成功 (shape: {recommendation_models['cosine_sim'].shape})")
+        
+        # 加载电影索引
+        with open(indices_path, 'rb') as f:
+            recommendation_models['indices'] = pickle.load(f)
+        print(f"✅ 电影索引加载成功 (索引数量: {len(recommendation_models['indices'])})")
+            
+        print("推荐模型加载成功！")
+        
+        # 设置推荐工具的模型引用
+        from .services.recommendation_utils import set_recommendation_models
+        set_recommendation_models(recommendation_models)
+        
+    except FileNotFoundError as e:
+        print(f"警告：推荐模型文件未找到 - {e}")
+        print("推荐功能将不可用，请确保模型文件存在于 Backend/algorithm/ 目录下")
+    except Exception as e:
+        print(f"❌ 加载模型时发生错误: {e}")
+        print("推荐功能将不可用")
+
+
+def get_recommendation_models():
+    """获取加载的推荐模型"""
+    return recommendation_models
 
 
 def init_database():
@@ -158,4 +221,31 @@ async def health_check():
         "status": "healthy",
         "timestamp": time.time(),
         "version": settings.app_version
+    }
+
+
+@app.get("/models/info", tags=["推荐"])
+async def get_model_info():
+    """获取推荐模型信息"""
+    from .services.recommendation_utils import get_model_info
+    return get_model_info()
+
+
+@app.get("/models/recommend/{movie_title}", tags=["推荐"])
+async def get_recommendations(movie_title: str, num_recommendations: int = 10):
+    """基于电影标题获取推荐"""
+    from .services.recommendation_utils import get_movie_recommendations
+    
+    recommendations = get_movie_recommendations(movie_title, num_recommendations)
+    
+    return {
+        "movie_title": movie_title,
+        "num_recommendations": len(recommendations),
+        "recommendations": [
+            {
+                "title": title,
+                "similarity_score": score
+            }
+            for title, score in recommendations
+        ]
     }
