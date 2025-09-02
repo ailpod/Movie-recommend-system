@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
 
 
 def init_database():
-    """安全的数据库初始化 - 只检查，不自动创建表"""
+    """数据库初始化检查"""
     try:
         from sqlalchemy import inspect
         
@@ -39,17 +39,15 @@ def init_database():
         existing_tables = inspector.get_table_names()
         
         if not existing_tables:
-            print("📊 数据库为空")
-            print("   请使用专门的导入脚本来创建表和导入数据:")
-            print("   python import_to_recommend_db.py")
+            print("数据库为空")
+            print("请使用DataBase下的脚本来做数据库迁移:")
         else:
-            print(f"📊 数据库已存在 {len(existing_tables)} 个表: {', '.join(existing_tables)}")
-            print("   数据库连接正常")
+            print(f"数据库已存在 {len(existing_tables)} 个表: {', '.join(existing_tables)}")
+            print("数据库连接正常")
                 
     except Exception as e:
-        print(f"❌ 数据库连接检查失败: {e}")
-        print("⚠️  请检查数据库配置和连接")
-
+        print(f"数据库连接检查失败: {e}")
+ 
 
 def create_application() -> FastAPI:
     """创建 FastAPI 应用实例"""

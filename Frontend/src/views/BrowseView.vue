@@ -78,7 +78,6 @@
           
           <div class="filter-actions">
             <button @click="resetFilters" class="reset-btn">重置筛选</button>
-            <div class="results-count">找到 {{ totalResults }} 部电影</div>
           </div>
         </div>
       </div>
@@ -299,8 +298,7 @@ body, html {
 .browse-view {
   min-height: 100vh;
   position: relative;
-  padding-top: 100px; /* 为固定导航栏留出空间 */
-  /* 更炫酷的科技感背景 - 与HomeView一致 */
+  padding-top: 100px; 
   background: 
     linear-gradient(
       135deg,
@@ -824,6 +822,32 @@ body, html {
   
   .card-title {
     font-size: 1.6rem;
+  }
+}
+
+/* 渐入动画效果 */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-content {
+    animation: fadeInUp 1s ease-out;
+  }
+
+  .filter-card {
+    animation: fadeInUp 1.2s ease-out;
+  }
+
+  .movies-grid {
+    animation: fadeInUp 1.4s ease-out;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

@@ -139,23 +139,6 @@ const movieGenres = computed(() => {
     return props.movie.genre_ids.map(id => getGenreName(id))
   }
   
-  // 如果都没有，根据电影标题或其他信息推测类型（临时方案）
-  const title = props.movie.title || ''
-  if (title.includes('复仇者') || title.includes('蜘蛛侠') || title.includes('蝙蝠侠')) {
-    return ['动作', '科幻']
-  }
-  if (title.includes('哈利·波特')) {
-    return ['奇幻', '冒险']
-  }
-  if (title.includes('盗梦空间')) {
-    return ['科幻', '悬疑']
-  }
-  if (title.includes('你的名字')) {
-    return ['动画', '爱情']
-  }
-  
-  // 默认返回通用类型
-  return ['剧情']
 })
 
 // 获取类型名称

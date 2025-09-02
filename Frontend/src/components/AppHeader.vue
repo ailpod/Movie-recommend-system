@@ -257,7 +257,7 @@ onUnmounted(() => {
   color: white;
   background: rgba(255, 255, 255, 0.1);
 }
-/* 
+
 .nav-link.active::after {
   content: '';
   position: absolute;
@@ -268,7 +268,7 @@ onUnmounted(() => {
   height: 3px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 2px;
-} */
+}
 
 /* 下拉菜单 */
 .nav-dropdown {

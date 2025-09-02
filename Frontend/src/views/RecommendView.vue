@@ -2,22 +2,21 @@
   <div class="recommend-container">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1 class="page-title">🎯 个性化推荐</h1>
-      <p class="page-subtitle">基于您的喜好为您精心推荐的电影</p>
-    </div>
-
+      <h1 class="page-title">🌟个性化推荐</h1>
+      <p class="page-subtitle">根据您的喜好精选的 {{ recommendedMovies.length }} 部电影</p>
+      
     <!-- 推荐算法状态 -->
-    <div class="recommendation-status">
-      <div v-if="!userPreferences" class="no-preferences">
-        <div class="empty-state">
-          <div class="empty-icon">🎭</div>
-          <h3>还没有设置电影偏好</h3>
-          <p>请先在个人资料页面设置您喜欢的电影类型，我们将为您提供个性化推荐</p>
-          <router-link to="/profile" class="btn btn-primary">
-            <i class="icon">⚙️</i>
-            去设置偏好
-          </router-link>
-        </div>
+      <div class="recommendation-status">
+        <div v-if="!userPreferences" class="no-preferences">
+          <div class="empty-state">
+            <div class="empty-icon">🎭</div>
+            <h3>还没有设置电影偏好</h3>
+            <p>请先在个人资料页面设置您喜欢的电影类型，我们将为您提供个性化推荐</p>
+            <router-link to="/profile" class="btn btn-primary">
+              <i class="icon">⚙️</i>
+              去设置偏好
+            </router-link>
+          </div>
       </div>
       
       <div v-else class="preferences-display">
@@ -29,14 +28,30 @@
         </div>
       </div>
     </div>
+    </div>
+
+
+ <!-- 推荐算法说明 -->
+    <div class="algorithm-info">
+      <details class="info-details">
+        <summary>🧠 推荐算法说明</summary>
+        <div class="info-content">
+          <h4>我们的推荐基于以下因素：</h4>
+          <ul>
+            <li>🎭 您设置的电影类型偏好</li>
+            <li>⭐ 电影之间的相关度</li>
+            <li>👥 您的收藏与浏览</li>
+            <li>🔥 电影的热门程度</li>
+          </ul>
+          <p class="note">
+            推荐算法会持续学习和优化，为您提供更精准的个性化推荐。
+          </p>
+        </div>
+      </details>
+    </div>
 
     <!-- 推荐电影列表 -->
     <div v-if="userPreferences" class="recommendation-section">
-      <div class="section-header">
-        <h2>🌟 为您推荐</h2>
-        <p>根据您的喜好精选的{{ recommendedMovies.length }}部电影</p>
-      </div>
-
       <!-- 加载状态 -->
       <div v-if="loading" class="loading-state">
         <div class="loading-spinner"></div>
@@ -61,25 +76,6 @@
           <p>我们正在完善推荐算法，稍后再来看看吧！</p>
         </div>
       </div>
-    </div>
-
-    <!-- 推荐算法说明 -->
-    <div class="algorithm-info">
-      <details class="info-details">
-        <summary>🧠 推荐算法说明</summary>
-        <div class="info-content">
-          <h4>我们的推荐基于以下因素：</h4>
-          <ul>
-            <li>🎭 您设置的电影类型偏好</li>
-            <li>⭐ 电影的平均评分</li>
-            <li>👥 您的最近浏览</li>
-            <li>🔥 电影的热门程度</li>
-          </ul>
-          <p class="note">
-            推荐算法会持续学习和优化，为您提供更精准的个性化推荐。
-          </p>
-        </div>
-      </details>
     </div>
   </div>
 </template>
@@ -534,6 +530,36 @@ export default {
   
   .movies-section {
     padding: 20px 10px;
+  }
+}
+
+/* 渐入动画效果 */
+@media (prefers-reduced-motion: no-preference) {
+  .page-header {
+    animation: fadeInUp 1s ease-out;
+  }
+
+  .recommendation-status {
+    animation: fadeInUp 1.2s ease-out;
+  }
+
+  .algorithm-info {
+    animation: fadeInUp 1.4s ease-out;
+  }
+
+  .movies-section {
+    animation: fadeInUp 1.6s ease-out;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

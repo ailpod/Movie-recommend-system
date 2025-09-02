@@ -802,4 +802,50 @@ onMounted(() => {
     font-size: 14px;
   }
 }
+
+/* 渐入动画效果 */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-content {
+    animation: fadeInUp 1s ease-out;
+  }
+
+  .content-container {
+    animation: fadeInUp 1.2s ease-out;
+  }
+
+  .movies-carousel-container {
+    animation: fadeInUp 1.4s ease-out;
+  }
+
+  .movie-card {
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .movie-card:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+
+  .movie-card:nth-child(3) {
+    animation-delay: 0.2s;
+  }
+
+  .movie-card:nth-child(4) {
+    animation-delay: 0.3s;
+  }
+
+  .clear-all-btn-fixed {
+    animation: fadeInUp 1.8s ease-out;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>
