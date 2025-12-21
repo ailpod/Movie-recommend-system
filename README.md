@@ -1,16 +1,31 @@
 # 🎬 电影推荐系统
 
-一个基于Vue.js + FastAPI的现代化电影推荐平台，实现个性化电影推荐、用户管理、收藏评分等完整功能。
+一个基于 **Vue 3 + TypeScript** 和 **FastAPI** 的现代化智能电影推荐平台，采用前后端分离架构，实现个性化推荐、用户管理、收藏评分等完整功能。
+
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green.svg)](https://fastapi.tiangolo.com/)
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.4-brightgreen.svg)](https://vuejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## ✨ 主要功能
 
-- 🔐 **用户认证系统** - JWT Token认证，注册登录
-- 🎭 **电影浏览** - 电影信息展示，分类搜索
-- ❤️ **收藏功能** - 个性化收藏管理
-- 📈 **浏览历史** - 智能历史记录
-- ⭐ **评分系统** - 用户评分功能
-- 🎯 **智能推荐** - 基于用户偏好和行为的个性化推荐算法
-- 📱 **响应式设计** - 适配多种设备
+### 核心功能
+- 🔐 **用户认证系统** - JWT Token 认证，安全的注册登录机制
+- 🎭 **电影浏览** - 1000+ 电影数据库，精美卡片展示，分类筛选
+- ❤️ **收藏功能** - 个性化收藏管理，快速收藏/取消
+- 📈 **浏览历史** - 自动记录浏览轨迹，智能历史管理
+- ⭐ **评分系统** - 5星评分机制，支持用户评价
+- 🎯 **智能推荐** - 基于协同过滤和内容推荐的混合推荐算法
+- 🔍 **搜索功能** - 支持电影名称、类型、年份等多维度搜索
+- 📱 **响应式设计** - 完美适配桌面端、平板、移动端
+
+### 技术亮点
+- 🚀 **高性能** - 异步 FastAPI 后端，Vite 快速构建
+- 🎨 **现代 UI** - TailwindCSS 美化，流畅动画效果
+- 🔒 **安全可靠** - 密码加密存储，Token 验证机制
+- 📊 **数据分析** - 基于 scikit-learn 的推荐算法
+- 🛠️ **类型安全** - TypeScript + Pydantic 双重类型检查
 
 ## 🏗️ 项目结构
 
@@ -87,69 +102,279 @@ Movie-recommend-system/
 
 ## 🚀 快速开始
 
-### 环境要求
+### 📋 环境要求
 
-- **Python** 3.8+
-- **Node.js** 16+
-- **npm** 8+
+| 软件 | 版本要求 | 说明 |
+|------|---------|------|
+| Python | 3.8+ | 后端运行环境 |
+| Node.js | 18.0+ | 前端运行环境 |
+| npm | 8.0+ | 包管理工具 |
+| pip | 最新版 | Python 包管理 |
 
-### 安装步骤
+### 📥 安装步骤
 
-1. **克隆项目**
-   ```bash
-   git clone https://github.com/ailpod/Movie-recommend-system.git
-   cd Movie-recommend-system
-   ```
+#### 1️⃣ 克隆项目
+```bash
+git clone https://github.com/ailpod/Movie-recommend-system.git
+cd Movie-recommend-system
+```
 
-2. **后端设置**
-   ```bash
-   # 安装 Python 依赖
-   pip install -r requirements.txt
-   
-   # 进入后端目录
-   cd Backend
-   
-   # 初始化数据库（首次运行）
-   python DataBase/import_data.py
-   
-   # 启动后端服务
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
+#### 2️⃣ 后端配置与启动
 
-3. **前端设置**（新开一个终端）
-   ```bash
-   cd Frontend
-   
-   # 安装依赖
-   npm install
-   
-   # 启动开发服务器
-   npm run dev
-   ```
+```bash
+# 进入后端目录
+cd Backend
 
-4. **访问应用**
-   - 前端：http://localhost:5173
-   - 后端API：http://localhost:8000
-   - API文档：http://localhost:8000/docs
+# 安装 Python 依赖
+pip install -r requirements.txt
 
-## 🎯 核心功能说明
+# 初始化数据库（首次运行）
+python DataBase/import_data.py
 
-### 推荐算法
-- 基于用户偏好权重（60%）、收藏历史（30%）、浏览历史（10%）的加权推荐
-- 使用余弦相似度矩阵计算电影相似性
-- 支持动态类型偏好匹配
+# 启动后端服务
+python start.py
+# 或使用 uvicorn
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-### 用户系统
-- JWT Token认证
-- 用户注册登录
-- 个人偏好设置
-- 收藏和历史管理
+**后端运行在：**
+- 🌐 API 服务：http://localhost:8000
+- 📖 API 文档：http://localhost:8000/docs
+- 📘 ReDoc 文档：http://localhost:8000/redoc
 
-### 电影系统
-- 1000+电影数据库
-- 多维度分类浏览
-- 搜索和过滤功能
-- 电影详情和相似推荐
+#### 3️⃣ 前端配置与启动
+
+```bash
+# 进入前端目录（新开一个终端）
+cd Frontend
+
+# 安装 npm 依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+```
+
+**前端运行在：**
+- 🎨 前端应用：http://localhost:5173
+
+#### 4️⃣ 首次使用
+
+1. 访问 http://localhost:5173
+2. 点击"注册"创建新账户
+3. 登录后即可开始探索电影推荐功能
+
+### 🔧 环境配置（可选）
+
+创建 `Backend/.env` 文件配置环境变量：
+
+```env
+# 数据库配置
+DATABASE_URL=sqlite:///./Recommend.db
+
+# JWT 密钥配置
+SECRET_KEY=your-secret-key-here
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# API 配置
+API_V1_STR=/api/v1
+PROJECT_NAME=Movie Recommendation System
+
+# CORS 配置
+BACKEND_CORS_ORIGINS=["http://localhost:5173"]
+```
+
+## 🎯 核心功能详解
+
+### 🤖 智能推荐算法
+采用混合推荐策略，结合多种推荐技术：
+
+- **协同过滤推荐**
+  - 基于用户偏好权重（60%）的个性化推荐
+  - 基于收藏历史（30%）的协同推荐
+  - 基于浏览历史（10%）的行为推荐
+  
+- **内容推荐**
+  - 使用余弦相似度矩阵计算电影相似性
+  - 基于电影类型、导演、演员等特征的内容匹配
+  - 支持动态类型偏好自动学习
+
+- **推荐优化**
+  - 去重过滤已收藏/已浏览电影
+  - 多样性保证，避免推荐结果单一
+  - 实时更新用户画像
+�️ 技术栈
+
+### 后端技术
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| FastAPI | 0.104.1 | 现代高性能 Web 框架 |
+| SQLAlchemy | 2.0.23 | ORM 数据库操作 |
+| Pydantic | 2.5.1 | 数据验证和设置管理 |
+| Python-JOSE | 3.3.0 | JWT Token 认证 |
+| Passlib | 1.7.4 | 密码加密 |
+| Scikit-learn | 1.3.2 | 机器学习和推荐算法 |
+| Pandas | 2.1.4 | 数据处理和分析 |
+| NumPy | 1.26.3 | 科学计算 |
+| Uvicorn | 0.24.0 | ASGI 服务器 |
+| Alembic | 1.13.1 | 数据库迁移工具 |
+
+### 前端技术
+| 技术� 项目截图
+
+> 待添加：首页、电影详情、推荐页面、个人中心等截图
+
+## 🚢 部署说明
+
+### Docker 部署（推荐）
+
+```bash
+# 构建镜像
+docker-compose build
+
+# 启动服务
+docker-compose up -d
+```
+
+### 生产环境部署
+
+**后端部署：**
+```bash
+# 使用 Gunicorn + Uvicorn workers
+gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
+```
+
+**前端部署：**
+```bash
+# 构建生产版本
+cd Frontend
+npm run build
+
+# 部署 dist 目录到 Nginx/Apache
+```
+
+## 📊 API 文档
+
+启动后端服务后，访问以下地址查看自动生成的 API 文档：
+
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+主要 API 端点：
+- `POST /api/auth/register` - 用户注册
+- `POST /api/auth/login` - 用户登录
+- `GET /api/movies` - 获取电影列表
+- `GET /api/movies/{id}` - 获取电影详情
+- `POST /api/movies/{id}/favorite` - 收藏电影
+- `GET /api/recommendations` - 获取个性化推荐
+
+## 🐛 常见问题
+
+<details>
+<summary><b>Q: 后端启动失败，提示数据库错误？</b></summary>
+
+**A:** 确保 `Backend/Recommend.db` 数据库文件存在，如不存在运行：
+```bash
+cd Backend
+python -c "from app.core.database import engine, Base; Base.metadata.create_all(bind=engine)"
+```
+</details>
+
+<details>
+<summary><b>Q: 前端请求后端失败，CORS 错误？</b></summary>
+
+**A:** 检查 `Backend/app/core/config.py` 中的 CORS 配置，确保包含前端地址：
+```python
+BACKEND_CORS_ORIGINS = ["http://localhost:5173"]
+```
+</details>
+
+<details>
+<summary><b>Q: 推荐结果为空？</b></summary>
+
+**A:** 需要先导入电影数据和生成相似度矩阵：
+```bash
+cd Backend
+python DataBase/import_data.py
+python algorithm/Similarity_matrix.py
+```
+</details>
+
+<details>
+<summary><b>Q: npm install 很慢或失败？</b></summary>
+
+**A:** 使用国内镜像源：
+```bash
+npm config set registry https://registry.npmmirror.com
+npm install
+```
+</details>
+
+## 🗺️ 开发路线图
+
+- [x] 基础用户认证系统
+- [x] 电影浏览和搜索
+- [x] 收藏和历史功能
+- [x] 协同过滤推荐算法
+- [ ] 社交功能（关注、评论）
+- [ ] 电影评论系统
+- [ ] 用户画像可视化
+- [ ] 推荐算法优化（深度学习）
+- [ ] 移动端 App
+- [ ] 实时推荐
+
+## 🤝 贡献指南
+
+欢迎各种形式的贡献！
+
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 提交 Pull Request
+
+## 📄 许可证
+
+本项目采用 [MIT License](LICENSE) 许可证。
+
+## 👨‍💻 作者
+
+- GitHub: [@ailpod](https://github.com/ailpod)
+
+## 🙏 致谢
+
+- [TMDB](https://www.themoviedb.org/) - 电影数据来源
+- [FastAPI](https://fastapi.tiangolo.com/) - 后端框架
+- [Vue.js](https://vuejs.org/) - 前端框架
+- 所有贡献者和支持者
+
+---
+
+⭐ 如果这个项目对你有帮助，请给一个 Star具 |
+| Axios | 1.6.7 | HTTP 请求库 |
+| TailwindCSS | 3.4.1 | 实用优先的 CSS 框架 |
+| VueUse | 10.7.2 | Vue 组合式 API 工具集 |
+| DayJS | 1.11.10 | 轻量级日期处理 |
+| Vue I18n | 9.9.1 | 国际化支持 |
+
+### 数据库
+- **SQLite** - 开发环境默认数据库，轻量级、零配置
+- 支持迁移至 PostgreSQL/MySQL 生产环境B 电影数据库
+  - 电影海报、简介、评分等详细信息
+  - 分类标签系统（动作、喜剧、科幻等）
+  
+- **浏览功能**
+  - 多维度分类筛选
+  - 关键词搜索
+  - 评分排序
+  - 上映年份筛选
+  
+- **交互功能**
+  - 电影详情页
+  - 相似电影推荐
+  - 快速收藏
+  - 评分功能
 
 ## 📱 技术栈
 
