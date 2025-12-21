@@ -103,15 +103,27 @@ Movie-recommend-system/
 
 2. **后端设置**
    ```bash
+   # 安装 Python 依赖
+   pip install -r requirements.txt
+   
+   # 进入后端目录
    cd Backend
-   pip install -r ../requirements.txt
+   
+   # 初始化数据库（首次运行）
+   python DataBase/import_data.py
+   
+   # 启动后端服务
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
 
-3. **前端设置**
+3. **前端设置**（新开一个终端）
    ```bash
    cd Frontend
+   
+   # 安装依赖
    npm install
+   
+   # 启动开发服务器
    npm run dev
    ```
 

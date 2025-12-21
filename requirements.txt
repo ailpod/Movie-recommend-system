@@ -29,22 +29,4 @@ Pillow==10.1.0
 
 # 配置管理
 python-dotenv==1.0.0
-vue-router@^4.3.0
-pinia@^2.1.7
-
-# UI和样式
-tailwindcss@^3.4.1
-autoprefixer@^10.4.17
-postcss@^8.4.35
-
-# HTTP客户端
-axios@^1.6.7
-
-# 工具库
-@vueuse/core@^10.7.2
-dayjs@^1.11.10
-vue-i18n@^9.9.1
-
-# 开发工具
-vite@^6.3.5
 
