@@ -281,6 +281,10 @@ const handleImageError = (event) => {
   gap: 8px;
 }
 
+.my-rating {
+  margin-top: 8px;
+}
+
 .movie-title {
   font-size: 1.1rem;
   font-weight: 600;

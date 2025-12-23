@@ -483,6 +483,12 @@ onMounted(() => {
   font-size: 0.9rem;
 }
 
+.movie-rating-control {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* 分页 */
 .pagination-container {
   display: flex;

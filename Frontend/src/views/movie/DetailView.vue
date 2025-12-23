@@ -64,7 +64,7 @@
                   <strong>投票数：</strong>{{ movie.vote }}
                 </div>
               </div>
-              
+
               <div class="action-buttons">
                 <button 
                   :class="['btn-primary', { 'favorited': isFavorited, 'loading': favoriteLoading }]"
@@ -76,6 +76,16 @@
                   <i v-else class="far fa-heart"></i>
                   {{ favoriteLoading ? '处理中...' : (isFavorited ? '已收藏' : '收藏') }}
                 </button>
+                
+                <!-- 评分按钮 -->
+                <button 
+                  class="btn-primary"
+                  @click="showRatingModal = true"
+                >
+                  <i class="fas fa-star"></i>
+                  评分
+                </button>
+                
                 <button class="btn-secondary" @click="$router.back()">返回</button>
               </div>
             </div>
@@ -141,6 +151,66 @@
     </div>
     </div>
     
+    <!-- 评分模态框 -->
+    <div v-if="showRatingModal" class="modal-overlay" @click="closeRatingModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-body">
+          <h3 class="modal-title">给《{{ movie.title }}》评分</h3>
+          <div v-if="userRating !== null" class="current-rating-simple">
+            <span class="rating-label">当前评分:</span>
+            <span class="rating-value">{{ userRating }}</span>
+          </div>
+          <label>请输入评分 (1.0 - 10.0)</label>
+          <input 
+            type="number" 
+            v-model.number="ratingInput" 
+            min="1" 
+            max="10" 
+            step="0.1"
+            placeholder="例如: 8.5"
+            class="modal-input"
+            @keyup.enter="submitRating"
+          />
+          <p v-if="!isValidRating && ratingInput" class="error-message">
+            请输入1.0到10.0之间的数字
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-modal-cancel" @click="closeRatingModal">取消</button>
+          <button 
+            v-if="userRating !== null"
+            class="btn-modal-delete"
+            @click="deleteRating"
+            :disabled="ratingLoading"
+          >
+            删除评分
+          </button>
+          <button 
+            class="btn-modal-submit"
+            @click="submitRating"
+            :disabled="ratingLoading || !isValidRating"
+          >
+            <i v-if="ratingLoading" class="fas fa-spinner fa-spin"></i>
+            {{ ratingLoading ? '提交中...' : '提交评分' }}
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 确认对话框 -->
+    <div v-if="showConfirmDialog" class="modal-overlay" @click="cancelConfirm">
+      <div class="confirm-dialog" @click.stop>
+        <div class="confirm-body">
+          <h3 class="confirm-title">{{ confirmTitle }}</h3>
+          <p class="confirm-message">{{ confirmMessage }}</p>
+        </div>
+        <div class="confirm-footer">
+          <button class="btn-confirm-no" @click="cancelConfirm">取消</button>
+          <button class="btn-confirm-yes" @click="handleConfirm">确认</button>
+        </div>
+      </div>
+    </div>
+    
     <!-- Toast 提示 -->
     <div class="toast-container">
       <div 
@@ -161,7 +231,7 @@ import { useRoute, useRouter } from 'vue-router'
 import movieApi, { getImageUrl, formatRating } from '@/services/movieApi'
 import { recordHistory, addFavorite, removeFavorite, checkFavoriteStatus } from '@/api/userActions.js'
 import { useAuthStore } from '@/stores/auth'
-import ratingApi from '@/services/ratingApi'
+import { submitRating as submitRatingAPI, getUserMovieRating, deleteRating as deleteRatingAPI } from '@/services/ratingService'
 
 const route = useRoute()
 const router = useRouter()
@@ -182,27 +252,162 @@ const toggleFavorite = async () => {
     return
   }
   
-  try {
-    favoriteLoading.value = true
-    if (isFavorited.value) {
-      await removeFavorite(movieId.value)
-      isFavorited.value = false
-      // 显示取消收藏提示
-      showToast('已取消收藏', 'info')
-    } else {
+  // 如果是取消收藏，显示确认对话框
+  if (isFavorited.value) {
+    showConfirm(
+      '取消收藏',
+      '确定要取消收藏这部电影吗？',
+      async () => {
+        try {
+          favoriteLoading.value = true
+          await removeFavorite(movieId.value)
+          isFavorited.value = false
+          showToast('已取消收藏', 'info')
+        } catch (error) {
+          console.error('收藏操作失败:', error)
+          showToast('操作失败，请稍后重试', 'error')
+        } finally {
+          favoriteLoading.value = false
+        }
+      }
+    )
+  } else {
+    // 添加收藏不需要确认
+    try {
+      favoriteLoading.value = true
       await addFavorite(movieId.value)
       isFavorited.value = true
-      // 显示收藏成功提示
       showToast('收藏成功 ❤️', 'success')
+    } catch (error) {
+      console.error('收藏操作失败:', error)
+      showToast('操作失败，请稍后重试', 'error')
+    } finally {
+      favoriteLoading.value = false
     }
-  } catch (error) {
-    console.error('收藏操作失败:', error)
-    showToast('操作失败，请稍后重试', 'error')
-  } finally {
-    favoriteLoading.value = false
   }
 }
 const favoriteLoading = ref(false)
+
+// 确认对话框相关
+const showConfirmDialog = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmCallback = ref(null)
+
+const showConfirm = (title, message, callback) => {
+  confirmTitle.value = title
+  confirmMessage.value = message
+  confirmCallback.value = callback
+  showConfirmDialog.value = true
+}
+
+const handleConfirm = async () => {
+  showConfirmDialog.value = false
+  if (confirmCallback.value) {
+    await confirmCallback.value()
+  }
+}
+
+const cancelConfirm = () => {
+  showConfirmDialog.value = false
+  confirmCallback.value = null
+}
+
+// 评分相关的状态
+const showRatingModal = ref(false)
+const ratingInput = ref(null)
+const userRating = ref(null)
+const ratingLoading = ref(false)
+
+// 关闭评分模态框
+const closeRatingModal = () => {
+  showRatingModal.value = false
+  ratingInput.value = userRating.value // 重置为当前评分
+}
+
+// 验证评分是否有效
+const isValidRating = computed(() => {
+  return ratingInput.value >= 1 && ratingInput.value <= 10
+})
+
+// 提交评分
+const submitRating = async () => {
+  if (!authStore.isAuthenticated) {
+    showToast('请先登录', 'error')
+    return
+  }
+  
+  if (!isValidRating.value) {
+    showToast('请输入1.0到10.0之间的评分', 'error')
+    return
+  }
+  
+  try {
+    ratingLoading.value = true
+    await submitRatingAPI(movieId.value, ratingInput.value)
+    userRating.value = ratingInput.value
+    showRatingModal.value = false
+    showToast('评分成功 ⭐', 'success')
+    // 重新加载电影详情以更新评分统计
+    await loadMovieDetail()
+  } catch (error) {
+    console.error('评分失败:', error)
+    showToast(error.message || '评分失败，请稍后重试', 'error')
+  } finally {
+    ratingLoading.value = false
+  }
+}
+
+// 删除评分
+const deleteRating = async () => {
+  if (!authStore.isAuthenticated) {
+    showToast('请先登录', 'error')
+    return
+  }
+  
+  showConfirm(
+    '删除评分',
+    '确定要删除您对这部电影的评分吗？',
+    async () => {
+      try {
+        ratingLoading.value = true
+        await deleteRatingAPI(movieId.value)
+        userRating.value = null
+        ratingInput.value = null
+        showRatingModal.value = false
+        showToast('已删除评分', 'info')
+        // 重新加载电影详情以更新评分统计
+        await loadMovieDetail()
+      } catch (error) {
+        console.error('删除评分失败:', error)
+        showToast(error.message || '删除评分失败', 'error')
+      } finally {
+        ratingLoading.value = false
+      }
+    }
+  )
+}
+
+// 加载用户评分
+const loadUserRating = async () => {
+  if (!authStore.isAuthenticated) return
+  
+  try {
+    const rating = await getUserMovieRating(movieId.value)
+    console.log('获取到的评分数据:', rating)
+    if (rating && rating.rating) {
+      userRating.value = rating.rating
+      ratingInput.value = rating.rating
+    } else {
+      userRating.value = null
+      ratingInput.value = null
+    }
+  } catch (error) {
+    console.error('获取用户评分失败:', error)
+    userRating.value = null
+    ratingInput.value = null
+  }
+}
 
 // Toast 提示功能
 const toasts = ref([])
@@ -263,6 +468,9 @@ const loadMovieDetail = async () => {
         // 检查收藏状态
         const response = await checkFavoriteStatus(movieId.value)
         isFavorited.value = response?.is_favorited || false
+        
+        // 加载用户评分
+        await loadUserRating()
       } catch (error) {
         console.error('记录浏览历史或检查收藏状态失败:', error)
       }
@@ -369,6 +577,11 @@ watch(() => route.params.id, (newId, oldId) => {
     loadMovieDetail()
   }
 })
+
+// 评分回调
+const onMovieRated = (data) => {
+  showToast(`评分成功：${data.value}/10 ⭐`, 'success')
+}
 </script>
 
 <style scoped>
@@ -599,6 +812,7 @@ watch(() => route.params.id, (newId, oldId) => {
 .action-buttons {
   display: flex;
   gap: 15px;
+  flex-wrap: wrap;
 }
 
 .btn-primary, .btn-secondary {
@@ -608,6 +822,9 @@ watch(() => route.params.id, (newId, oldId) => {
   font-size: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-primary {
@@ -629,6 +846,264 @@ watch(() => route.params.id, (newId, oldId) => {
 .btn-secondary:hover {
   border-color: #999;
   background: rgba(255, 255, 255, 0.1);
+}
+
+/* 模态框样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: #1e2028;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-body {
+  padding: 28px 24px 24px;
+}
+
+.modal-title {
+  margin: 0 0 20px 0;
+  color: #00d4ff;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.current-rating-simple {
+  background: rgba(0, 212, 255, 0.1);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.rating-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+.rating-value {
+  color: #00d4ff;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.modal-body label {
+  display: block;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #00d4ff;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.modal-footer {
+  padding: 0 24px 24px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-modal-submit,
+.btn-modal-delete,
+.btn-modal-cancel {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-modal-submit {
+  background: #00d4ff;
+  color: white;
+}
+
+.btn-modal-submit:hover:not(:disabled) {
+  background: #00b8e6;
+}
+
+.btn-modal-submit:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-modal-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-modal-delete {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-modal-delete:hover:not(:disabled) {
+  background: #c0392b;
+}
+
+.btn-modal-delete:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-modal-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-modal-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-modal-cancel:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-modal-cancel:active {
+  transform: scale(0.97);
+}
+
+/* 确认对话框样式 */
+.confirm-dialog {
+  background: #1e2028;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 380px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirm-body {
+  padding: 28px 24px 24px;
+}
+
+.confirm-title {
+  margin: 0 0 12px 0;
+  color: #e74c3c;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.confirm-message {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.confirm-footer {
+  padding: 0 24px 24px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-confirm-yes,
+.btn-confirm-no {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-confirm-yes {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-confirm-yes:hover {
+  background: #c0392b;
+}
+
+.btn-confirm-yes:active {
+  transform: scale(0.97);
+}
+
+.btn-confirm-no {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-confirm-no:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-confirm-no:active {
+  transform: scale(0.97);
 }
 
 /* 响应式设计 */

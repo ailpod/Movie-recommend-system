@@ -129,6 +129,35 @@ class FavoriteResponse(BaseModel):
     movie: MovieSimple
     created_at: datetime
 
+# 评分相关 Schema
+class RatingBase(BaseModel):
+    rating: float = Field(ge=1.0, le=10.0, description="评分范围：1.0-10.0")
+
+class RatingCreate(RatingBase):
+    movie_id: int = Field(gt=0, description="电影ID")
+
+class RatingUpdate(RatingBase):
+    pass
+
+class Rating(RatingBase):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    user_id: int
+    movie_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+# 评分记录的响应 Schema（包含电影信息）
+class RatingResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    rating: float
+    movie: MovieSimple
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
 # Token 相关
 class Token(BaseModel):
     access_token: str

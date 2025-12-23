@@ -25,6 +25,7 @@ class User(Base):
     # 关联关系
     browsing_history = relationship("BrowsingHistory", back_populates="user")
     favorites = relationship("Favorite", back_populates="user")
+    ratings = relationship("Rating", back_populates="user")
 
 class Movie(Base):
     """电影模型 - 匹配JSON数据结构"""
@@ -45,6 +46,7 @@ class Movie(Base):
     # 关联关系
     history_entries = relationship("BrowsingHistory", back_populates="movie")
     favorited_by = relationship("Favorite", back_populates="movie")
+    ratings = relationship("Rating", back_populates="movie")
 
 
 # 新增：浏览历史模型
@@ -73,3 +75,20 @@ class Favorite(Base):
     # 关联关系
     user = relationship("User", back_populates="favorites")
     movie = relationship("Movie", back_populates="favorited_by")
+
+
+# 新增：用户评分模型
+class Rating(Base):
+    """用户电影评分模型"""
+    __tablename__ = "ratings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    movie_id = Column(Integer, ForeignKey("movies.id"), nullable=False, index=True)
+    rating = Column(Float, nullable=False)  # 用户评分（1.0-10.0）
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # 关联关系
+    user = relationship("User", back_populates="ratings")
+    movie = relationship("Movie", back_populates="ratings")

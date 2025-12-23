@@ -17,6 +17,7 @@ from .core.config import get_settings
 from .core.database import engine, Base
 from .routers import auth_router, users_router, movies_router, api_router
 from .routers.user_actions import router as user_actions_router
+from .routers.ratings import router as ratings_router
 
 
 settings = get_settings()
@@ -122,6 +123,13 @@ def init_database():
             print("请使用DataBase下的脚本来做数据库迁移:")
         else:
             print(f"数据库已存在 {len(existing_tables)} 个表: {', '.join(existing_tables)}")
+            
+            # 检查是否缺少 ratings 表
+            if 'ratings' not in existing_tables:
+                print("检测到缺少 ratings 表，正在创建...")
+                Base.metadata.create_all(bind=engine, tables=[Base.metadata.tables.get('ratings')])
+                print("✅ ratings 表创建成功")
+            
             print("数据库连接正常")
                 
     except Exception as e:
@@ -153,6 +161,7 @@ def create_application() -> FastAPI:
     app.include_router(movies_router, prefix=settings.api_v1_str)
     app.include_router(api_router, prefix=settings.api_v1_str)
     app.include_router(user_actions_router, prefix=settings.api_v1_str)
+    app.include_router(ratings_router, prefix=settings.api_v1_str)
     
     # 挂载静态文件目录
     app.mount("/static", StaticFiles(directory="static"), name="static")

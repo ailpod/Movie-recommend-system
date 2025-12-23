@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import DetailView from '../views/DetailView.vue'
-import SearchView from '../views/SearchView.vue'
-import LoginView from '../views/LoginView.vue'
-import RegisterView from '../views/RegisterView.vue'
-import ProfileView from '../views/ProfileView.vue'
+import HomeView from '../views/common/HomeView.vue'
+import DetailView from '../views/movie/DetailView.vue'
+import SearchView from '../views/movie/SearchView.vue'
+import LoginView from '../views/auth/LoginView.vue'
+import RegisterView from '../views/auth/RegisterView.vue'
+import ProfileView from '../views/user/ProfileView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const routes = [
@@ -52,7 +52,7 @@ const routes = [
   {
     path: '/browse',
     name: 'Browse',
-    component: () => import('../views/BrowseView.vue'),
+    component: () => import('../views/movie/BrowseView.vue'),
     meta: {
       title: '电影浏览 - 电影推荐系统'
     }
@@ -60,7 +60,7 @@ const routes = [
   {
     path: '/recommend',
     name: 'Recommend',
-    component: () => import('../views/RecommendView.vue'),
+    component: () => import('../views/movie/RecommendView.vue'),
     meta: {
       title: '个性化推荐 - 电影推荐系统',
       requiresAuth: true
@@ -78,7 +78,7 @@ const routes = [
   {
     path: '/favorites',
     name: 'Favorites',
-    component: () => import('../views/FavoritesView.vue'),
+    component: () => import('../views/user/FavoritesView.vue'),
     meta: {
       title: '我的收藏 - 电影推荐系统',
       requiresAuth: true
@@ -87,9 +87,18 @@ const routes = [
   {
     path: '/history',
     name: 'History',
-    component: () => import('../views/HistoryView.vue'),
+    component: () => import('../views/user/HistoryView.vue'),
     meta: {
       title: '观看记录 - 电影推荐系统',
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/ratings',
+    name: 'RatingHistory',
+    component: () => import('../views/user/RatingHistoryView.vue'),
+    meta: {
+      title: '评分历史 - 电影推荐系统',
       requiresAuth: true
     }
   },
@@ -97,7 +106,7 @@ const routes = [
     // 404页面
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('../views/NotFoundView.vue'),
+    component: () => import('../views/common/NotFoundView.vue'),
     meta: {
       title: '页面未找到 - 电影推荐系统'
     }

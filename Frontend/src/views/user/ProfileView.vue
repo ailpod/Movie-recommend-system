@@ -59,7 +59,7 @@
       <!-- 电影偏好设置 -->
       <div class="preferences-section">
         <div class="section-header">
-          <h2>🎭 电影偏好设置</h2>
+          <h2>电影偏好设置</h2>
           <p>选择您喜欢的电影类型，我们将为您提供个性化推荐</p>
         </div>
         
@@ -99,14 +99,14 @@
               :disabled="saving || selectedGenres.length === 0"
             >
               <span v-if="saving">保存中...</span>
-              <span v-else>💾 保存偏好</span>
+              <span v-else>保存偏好</span>
             </button>
             <button 
               @click="resetPreferences" 
               class="reset-btn"
               :disabled="saving"
             >
-              🔄 重置
+             重置
             </button>
           </div>
         </div>
