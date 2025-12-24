@@ -11,7 +11,8 @@ import os
 from typing import List, Dict, Any
 
 # 添加项目根目录到 Python 路径
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, backend_dir)
 
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal, engine
@@ -192,8 +193,8 @@ def main():
     """主函数"""
     print("开始导入电影数据...")
     
-    # JSON文件路径
-    json_file_path = os.path.join(os.path.dirname(__file__), "static", "tmdb_1000_movies.json")
+    # JSON文件路径 - static 文件夹在 Backend 目录下
+    json_file_path = os.path.join(backend_dir, "static", "tmdb_1000_movies.json")
     
     # 加载电影数据
     movies_data = load_movies_data(json_file_path)
