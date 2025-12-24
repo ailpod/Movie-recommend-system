@@ -8,10 +8,14 @@ from typing import List, Optional
 import os
 from functools import lru_cache
 
+# 获取 Backend 目录的绝对路径
+BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DB_PATH = os.path.join(BACKEND_DIR, "recommend.db")
+
 
 class DatabaseSettings(BaseSettings):
     """数据库配置"""
-    url: str = "sqlite:///./Recommend.db"
+    url: str = f"sqlite:///{DB_PATH}"
     echo: bool = False
     pool_size: int = 10
     max_overflow: int = 20
