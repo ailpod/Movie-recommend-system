@@ -18,6 +18,7 @@ from .core.database import engine, Base
 from .routers import auth_router, users_router, movies_router, api_router
 from .routers.user_actions import router as user_actions_router
 from .routers.ratings import router as ratings_router
+from .routers.agent import router as agent_router
 
 
 settings = get_settings()
@@ -162,6 +163,7 @@ def create_application() -> FastAPI:
     app.include_router(api_router, prefix=settings.api_v1_str)
     app.include_router(user_actions_router, prefix=settings.api_v1_str)
     app.include_router(ratings_router, prefix=settings.api_v1_str)
+    app.include_router(agent_router, prefix=settings.api_v1_str)  # AI Agent 路由
     
     # 挂载静态文件目录
     app.mount("/static", StaticFiles(directory="static"), name="static")

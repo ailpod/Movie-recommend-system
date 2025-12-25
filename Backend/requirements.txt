@@ -35,6 +35,9 @@ Pillow==10.1.0
 httpx==0.26.0
 requests==2.31.0
 
+# AI and LLM
+openai==1.54.0
+
 # Task Queue (Optional)
 celery==5.3.4
 redis==5.0.1
