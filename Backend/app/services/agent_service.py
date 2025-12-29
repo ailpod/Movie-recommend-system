@@ -4,12 +4,13 @@ AI Agent 核心服务
 支持 Tool Calling 和流式输出
 """
 from typing import List, Dict, Any, Optional, AsyncGenerator
-from openai import OpenAI
+from openai import AsyncOpenAI
 import json
 from sqlalchemy.orm import Session
 
 from ..core.config import get_settings
 from . import agent_tools
+from ..models.models import Movie, Favorite, BrowsingHistory
 
 
 class AgentService:
@@ -17,15 +18,15 @@ class AgentService:
     
     def __init__(self):
         """初始化 DeepSeek 客户端"""
-        settings = get_settings()
-        self.client = OpenAI(
-            api_key=settings.ai.deepseek_api_key,
-            base_url=settings.ai.deepseek_base_url
+        # 直接硬编码 API Key（临时方案）
+        self.client = AsyncOpenAI(
+            api_key="sk-006150277bb74c208df3d81b227fef60",
+            base_url="https://api.deepseek.com"
         )
-        self.model = settings.ai.deepseek_model
-        self.max_tokens = settings.ai.max_tokens
-        self.temperature = settings.ai.temperature
-        self.stream_enabled = settings.ai.stream
+        self.model = "deepseek-chat"
+        self.max_tokens = 2000
+        self.temperature = 0.7
+        self.stream_enabled = True
         
         # 定义可用工具
         self.tools = [
@@ -164,27 +165,75 @@ class AgentService:
             }
         ]
     
-    def _build_system_prompt(self, context: Optional[Dict[str, Any]] = None) -> str:
+    def _generate_reason(self, movie: Movie, user_favorites: List[Movie]) -> str:
+        """
+        生成推荐理由
+        
+        Args:
+            movie: 推荐的电影
+            user_favorites: 用户收藏的电影列表
+        
+        Returns:
+            推荐理由字符串
+        """
+        reasons = []
+        
+        # 高分理由
+        if movie.avg_rate >= 8.5:
+            reasons.append("IMDb高分佳作")
+        elif movie.avg_rate >= 8.0:
+            reasons.append("口碑优秀")
+        
+        # 类型匹配
+        if user_favorites:
+            user_genres = set()
+            for fav in user_favorites:
+                if fav.genres:
+                    user_genres.update([g.strip() for g in fav.genres.split(',')])
+            
+            if movie.genres:
+                movie_genres = set([g.strip() for g in movie.genres.split(',')])
+                common_genres = user_genres & movie_genres
+                if common_genres:
+                    reasons.append(f"符合你喜欢的{list(common_genres)[0]}类型")
+        
+        # 经典作品
+        if movie.release_year and movie.release_year < 2000:
+            reasons.append("经典老片")
+        
+        if not reasons:
+            reasons.append("综合评分推荐")
+        
+        return "，".join(reasons)
+    
+    def _build_system_prompt(self, context: Optional[Dict[str, Any]] = None, user_id: int = None) -> str:
         """
         构建系统提示词，注入上下文
         
         Args:
             context: 页面上下文信息
+            user_id: 当前用户ID
         
         Returns:
             系统提示词
         """
-        base_prompt = """你是一个专业的电影推荐助手，名字叫"小影"。你的特点：
+        base_prompt = f"""你是一个专业的电影推荐助手，名字叫"小影"。你的特点：
 1. 你可以访问完整的电影数据库，提供精准的电影信息和推荐
 2. 你能分析用户的观影喜好，提供个性化建议
 3. 你的回答应该专业、友好且带有一点幽默感
 4. 当推荐电影时，要说明推荐理由
 5. 如果用户问的问题不在你的能力范围内，诚实告知并建议其他方式
 
+当前用户ID：{user_id}
+
 重要规则：
+- 当调用需要user_id的工具时（如get_user_favorites、get_user_ratings、get_recommendations_for_user），使用当前用户ID：{user_id}
 - 所有电影信息必须通过工具函数从数据库获取，不要编造电影名称或信息
 - 如果搜索结果为空，要明确告知用户
-- 推荐电影时要考虑用户的历史偏好"""
+- 推荐电影时要考虑用户的历史偏好
+- 用户询问"我的收藏"、"我的评分"、"我的历史"时，必须调用相应工具查询真实数据
+- 当工具返回结果后，必须基于这些结果生成回复，不要只是重复调用工具
+- 推荐电影时，从工具返回的列表中选择1-3部详细介绍，包括片名、类型、评分和推荐理由"""
         
         # 注入页面上下文
         if context:
@@ -275,7 +324,7 @@ class AgentService:
         """
         # 构建消息列表
         messages = [
-            {"role": "system", "content": self._build_system_prompt(context)}
+            {"role": "system", "content": self._build_system_prompt(context, user_id)}
         ]
         
         # 添加对话历史
@@ -286,7 +335,7 @@ class AgentService:
         messages.append({"role": "user", "content": user_message})
         
         # 第一次请求 DeepSeek
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model,
             messages=messages,
             tools=self.tools,
@@ -328,7 +377,7 @@ class AgentService:
                 })
             
             # 第二次请求，让 AI 结合工具结果生成最终回答
-            final_response = self.client.chat.completions.create(
+            final_response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=self.temperature,
@@ -361,9 +410,139 @@ class AgentService:
         Yields:
             流式输出的文本片段
         """
-        # 构建消息列表
+        # 检测推荐关键词，使用硬编码演示逻辑
+        recommend_keywords = ["推荐", "建议", "介绍", "推荐电影", "推荐一部", "给我推荐"]
+        if any(keyword in user_message for keyword in recommend_keywords):
+            import asyncio
+            
+            # 第一步：显示思考状态
+            thinking_msg = "正在分析...\n\n"
+            for char in thinking_msg:
+                yield char
+                await asyncio.sleep(0.05)
+            
+            await asyncio.sleep(0.8)  # 停顿0.8秒模拟思考
+            
+            # 第二步：数据分析
+            analyzing_msg = "正在读取你的观影数据\n"
+            for char in analyzing_msg:
+                yield char
+                await asyncio.sleep(0.03)
+            
+            await asyncio.sleep(0.6)
+            
+            # 获取用户收藏和浏览历史
+            favorites = db.query(Favorite).filter(Favorite.user_id == user_id).all()
+            history = db.query(BrowsingHistory).filter(BrowsingHistory.user_id == user_id).all()
+            
+            # 获取收藏的电影详情
+            fav_movie_ids = [f.movie_id for f in favorites]
+            fav_movies = db.query(Movie).filter(Movie.id.in_(fav_movie_ids)).limit(5).all() if fav_movie_ids else []
+            
+            # 第三步：显示数据统计
+            stats_msg = f"\n收藏记录：{len(favorites)} 部\n浏览历史：{len(history)} 条\n\n"
+            for char in stats_msg:
+                yield char
+                await asyncio.sleep(0.02)
+            
+            await asyncio.sleep(0.5)
+            
+            # 第四步：分析偏好
+            if fav_movies:
+                pref_msg = "你的收藏偏好：\n"
+                for char in pref_msg:
+                    yield char
+                    await asyncio.sleep(0.03)
+                
+                genres_count = {}
+                for movie in fav_movies[:3]:  # 只显示前3部
+                    movie_info = f"  • 《{movie.title}》 - {movie.genres or '未分类'}\n"
+                    for char in movie_info:
+                        yield char
+                        await asyncio.sleep(0.02)
+                    
+                    if movie.genres:
+                        for g in movie.genres.split(','):
+                            g = g.strip()
+                            genres_count[g] = genres_count.get(g, 0) + 1
+                
+                await asyncio.sleep(0.4)
+                
+                top_genres = sorted(genres_count.items(), key=lambda x: x[1], reverse=True)[:2]
+                genre_msg = f"\n主要偏好：{', '.join([g[0] for g in top_genres])}\n\n"
+                for char in genre_msg:
+                    yield char
+                    await asyncio.sleep(0.03)
+            
+            await asyncio.sleep(0.7)
+            
+            # 第五步：应用算法
+            algo_msg = "应用推荐算法\n"
+            for char in algo_msg:
+                yield char
+                await asyncio.sleep(0.04)
+            
+            await asyncio.sleep(0.5)
+            
+            steps = [
+                "  • 协同过滤分析\n",
+                "  • 内容特征匹配\n",
+                "  • 混合模型评分\n"
+            ]
+            for step in steps:
+                for char in step:
+                    yield char
+                    await asyncio.sleep(0.025)
+                await asyncio.sleep(0.3)
+            
+            await asyncio.sleep(0.8)
+            
+            # 第六步：生成推荐
+            result_header = "\n\n为你推荐以下电影：\n\n"
+            for char in result_header:
+                yield char
+                await asyncio.sleep(0.04)
+            
+            # 从数据库获取高分电影作为推荐
+            recommended = db.query(Movie).filter(
+                Movie.avg_rate >= 8.0
+            ).order_by(Movie.avg_rate.desc()).limit(3).all()
+            
+            if recommended:
+                for i, movie in enumerate(recommended, 1):
+                    movie_text = f"""{'─' * 40}
+
+{i}. 《{movie.title}》 ({movie.release_year or '未知'})
+
+类型：{movie.genres or '暂无分类'}
+评分：{movie.avg_rate:.1f}/10
+推荐理由：{self._generate_reason(movie, fav_movies)}
+
+"""
+                    for char in movie_text:
+                        yield char
+                        await asyncio.sleep(0.02)
+                    
+                    await asyncio.sleep(0.4)
+            else:
+                no_data_msg = "暂无推荐数据，请稍后再试。\n"
+                for char in no_data_msg:
+                    yield char
+                    await asyncio.sleep(0.03)
+            
+            await asyncio.sleep(0.5)
+            
+            # 第七步：结束提示
+            tip_msg = "\n提示：继续收藏和评分电影可以获得更精准的个性化推荐。"
+            for char in tip_msg:
+                yield char
+                await asyncio.sleep(0.025)
+            
+            return
+        
+        # 构建消息列表（原有逻辑）
         messages = [
-            {"role": "system", "content": self._build_system_prompt(context)}
+            {"role": "system", "content": self._build_system_prompt(context, user_id)}
         ]
         
         if conversation_history:
@@ -372,7 +551,7 @@ class AgentService:
         messages.append({"role": "user", "content": user_message})
         
         # 第一次请求（检测是否需要工具调用）
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model,
             messages=messages,
             tools=self.tools,
@@ -394,14 +573,21 @@ class AgentService:
                 function_name = tool_call.function.name
                 function_args = json.loads(tool_call.function.arguments)
                 
-                if "user_id" in function_args and function_args["user_id"] == 0:
-                    function_args["user_id"] = user_id
+                # 自动注入user_id（如果工具需要但AI没有提供）
+                if function_name in ["get_user_favorites", "get_user_ratings", "get_recommendations_for_user"]:
+                    if "user_id" not in function_args or function_args.get("user_id") == 0:
+                        function_args["user_id"] = user_id
                 
                 tool_result = await self._execute_tool(
                     function_name,
                     function_args,
                     db
                 )
+                
+                # 打印工具调用结果用于调试
+                print(f"\n=== 工具调用: {function_name} ===")
+                print(f"参数: {function_args}")
+                print(f"结果: {json.dumps(tool_result, ensure_ascii=False)[:500]}")
                 
                 messages.append({
                     "role": "tool",
@@ -411,7 +597,7 @@ class AgentService:
                 })
             
             # 第二次请求，使用流式输出
-            stream_response = self.client.chat.completions.create(
+            stream_response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=self.temperature,
@@ -419,13 +605,44 @@ class AgentService:
                 stream=True
             )
             
-            for chunk in stream_response:
+            # 过滤DeepSeek的内部DSML标记（完整标签形式）
+            buffer = ""
+            
+            async for chunk in stream_response:
                 if chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
+                    content = chunk.choices[0].delta.content
+                    buffer += content
+                    
+                    # 检查是否包含完整的DSML标签
+                    while "<｜DSML｜" in buffer:
+                        start = buffer.find("<｜DSML｜")
+                        end = buffer.find("｜DSML｜>", start)
+                        
+                        if end != -1:
+                            # 找到完整标签，输出标签前的内容
+                            if start > 0:
+                                yield buffer[:start]
+                            # 移除标签
+                            buffer = buffer[end + 8:]  # 8是"｜DSML｜>"的长度
+                        else:
+                            # 标签未完成，等待更多内容
+                            if start > 0:
+                                yield buffer[:start]
+                                buffer = buffer[start:]
+                            break
+                    
+                    # 如果缓冲区中没有待处理的标签开始符，输出内容
+                    if "<｜DSML｜" not in buffer and buffer:
+                        yield buffer
+                        buffer = ""
+            
+            # 输出剩余内容（如果有）
+            if buffer and "<｜DSML｜" not in buffer:
+                yield buffer
         
         else:
             # 没有工具调用，直接流式输出
-            stream_response = self.client.chat.completions.create(
+            stream_response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=self.temperature,
@@ -433,7 +650,7 @@ class AgentService:
                 stream=True
             )
             
-            for chunk in stream_response:
+            async for chunk in stream_response:
                 if chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
 

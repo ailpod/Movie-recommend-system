@@ -50,18 +50,28 @@ export const chatWithAgentStream = async (data, onChunk) => {
 
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
+  let buffer = '' // 累积未完成的数据
 
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
 
-    const text = decoder.decode(value)
-    const lines = text.split('\n')
+    // 解码并添加到缓冲区
+    buffer += decoder.decode(value, { stream: true })
+    
+    // 按行分割
+    const lines = buffer.split('\n')
+    
+    // 保留最后一个不完整的行
+    buffer = lines.pop() || ''
 
     for (const line of lines) {
       if (line.startsWith('data: ')) {
         try {
-          const data = JSON.parse(line.slice(6))
+          const jsonStr = line.slice(6).trim()
+          if (!jsonStr) continue
+          
+          const data = JSON.parse(jsonStr)
           if (data.error) {
             throw new Error(data.error)
           }
@@ -69,7 +79,7 @@ export const chatWithAgentStream = async (data, onChunk) => {
             onChunk(data.content)
           }
         } catch (e) {
-          console.error('Parse error:', e)
+          console.error('Parse error:', e, 'Line:', line)
         }
       }
     }

@@ -1,6 +1,0 @@
-export { default as Welcome } from './Welcome.vue'
-export { default as MessageList } from './MessageList.vue'
-export { default as InputArea } from './InputArea.vue'
-export { default as UserMessage } from './UserMessage.vue'
-export { default as AssistantMessage } from './AssistantMessage.vue'
-export { default as MarkdownRenderer } from './MarkdownRenderer.vue'

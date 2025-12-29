@@ -41,7 +41,7 @@ async def search_movies(
         if query:
             search_filter = or_(
                 Movie.title.ilike(f"%{query}%"),
-                Movie.overview.ilike(f"%{query}%")
+                Movie.description.ilike(f"%{query}%")
             )
             db_query = db_query.filter(search_filter)
         
@@ -51,16 +51,12 @@ async def search_movies(
         
         # 年份筛选
         if year_start:
-            db_query = db_query.filter(
-                func.extract('year', Movie.release_date) >= year_start
-            )
+            db_query = db_query.filter(Movie.release_year >= year_start)
         if year_end:
-            db_query = db_query.filter(
-                func.extract('year', Movie.release_date) <= year_end
-            )
+            db_query = db_query.filter(Movie.release_year <= year_end)
         
         # 按评分排序
-        db_query = db_query.order_by(Movie.vote_average.desc())
+        db_query = db_query.order_by(Movie.avg_rate.desc())
         
         # 限制数量
         movies = db_query.limit(limit).all()
@@ -71,11 +67,11 @@ async def search_movies(
             results.append({
                 "id": movie.id,
                 "title": movie.title,
-                "overview": movie.overview[:200] if movie.overview else "",
+                "description": movie.description[:200] if movie.description else "",
                 "genres": movie.genres,
-                "release_date": str(movie.release_date) if movie.release_date else "",
-                "vote_average": float(movie.vote_average) if movie.vote_average else 0,
-                "vote_count": movie.vote_count or 0,
+                "release_year": movie.release_year or 0,
+                "avg_rate": float(movie.avg_rate) if movie.avg_rate else 0,
+                "vote": movie.vote or 0,
                 "poster_path": movie.poster_path
             })
         
@@ -131,14 +127,15 @@ async def get_user_favorites(
                     genre = genre.strip()
                     genres_count[genre] = genres_count.get(genre, 0) + 1
             
-            if movie.vote_average:
-                total_rating += movie.vote_average
+            if movie.avg_rate:
+                total_rating += movie.avg_rate
             
             movie_list.append({
                 "id": movie.id,
                 "title": movie.title,
                 "genres": movie.genres,
-                "vote_average": float(movie.vote_average) if movie.vote_average else 0
+                "avg_rate": float(movie.avg_rate) if movie.avg_rate else 0,
+                "release_year": movie.release_year or 0
             })
         
         # 排序找出最喜欢的类型
@@ -265,9 +262,10 @@ async def get_recommendations_for_user(
             results.append({
                 "id": movie.id,
                 "title": movie.title,
-                "overview": movie.overview[:200] if movie.overview else "",
+                "description": movie.description[:200] if movie.description else "",
                 "genres": movie.genres,
-                "vote_average": float(movie.vote_average) if movie.vote_average else 0,
+                "avg_rate": float(movie.avg_rate) if movie.avg_rate else 0,
+                "release_year": movie.release_year or 0,
                 "reason": "基于您的观看历史和评分"
             })
         
@@ -308,9 +306,10 @@ async def get_similar_movies(
             results.append({
                 "id": movie.id,
                 "title": movie.title,
-                "overview": movie.overview[:200] if movie.overview else "",
+                "description": movie.description[:200] if movie.description else "",
                 "genres": movie.genres,
-                "vote_average": float(movie.vote_average) if movie.vote_average else 0,
+                "avg_rate": float(movie.avg_rate) if movie.avg_rate else 0,
+                "release_year": movie.release_year or 0,
                 "similarity_reason": f"与《{target_movie.title}》类型相似"
             })
         
@@ -342,14 +341,14 @@ async def get_movie_details(
         return {
             "id": movie.id,
             "title": movie.title,
-            "overview": movie.overview,
+            "description": movie.description,
             "genres": movie.genres,
-            "release_date": str(movie.release_date) if movie.release_date else "",
-            "vote_average": float(movie.vote_average) if movie.vote_average else 0,
-            "vote_count": movie.vote_count or 0,
-            "runtime": movie.runtime,
-            "poster_path": movie.poster_path,
-            "backdrop_path": movie.backdrop_path
+            "release_year": movie.release_year or 0,
+            "avg_rate": float(movie.avg_rate) if movie.avg_rate else 0,
+            "vote": movie.vote or 0,
+            "director": movie.director,
+            "actors": movie.actors,
+            "poster_path": movie.poster_path
         }
     except Exception as e:
         print(f"获取电影详情错误: {str(e)}")

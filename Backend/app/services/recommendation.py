@@ -25,9 +25,9 @@ class RecommendationService:
         """
         # 占位实现：返回评分最高的电影
         movies = self.db.query(models.Movie).filter(
-            models.Movie.rating.isnot(None)
+            models.Movie.avg_rate.isnot(None)
         ).order_by(
-            models.Movie.rating.desc()
+            models.Movie.avg_rate.desc()
         ).limit(limit).all()
         
         return movies
@@ -90,9 +90,9 @@ class RecommendationService:
         目前返回最新添加的高分电影作为占位
         """
         movies = self.db.query(models.Movie).filter(
-            models.Movie.rating >= 7.0
+            models.Movie.avg_rate >= 7.0
         ).order_by(
-            models.Movie.created_at.desc()
+            models.Movie.id.desc()
         ).limit(limit).all()
         
         return movies

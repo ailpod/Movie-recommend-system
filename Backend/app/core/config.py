@@ -105,6 +105,22 @@ class RecommendationSettings(BaseSettings):
         env_prefix = "RECOMMENDATION_"
 
 
+class AISettings(BaseSettings):
+    """AI 配置"""
+    # DeepSeek API 配置
+    deepseek_api_key: str = "your-api-key-here"
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_model: str = "deepseek-chat"
+    
+    # 模型参数
+    max_tokens: int = 2000
+    temperature: float = 0.7
+    stream: bool = True
+    
+    class Config:
+        env_prefix = "AI_"
+
+
 class Settings(BaseSettings):
     """主配置类"""
     # 应用基本信息
@@ -132,6 +148,7 @@ class Settings(BaseSettings):
     email: EmailSettings = EmailSettings()
     logging: LoggingSettings = LoggingSettings()
     recommendation: RecommendationSettings = RecommendationSettings()
+    ai: AISettings = AISettings()
     
     @validator('upload_path')
     def create_upload_directory(cls, v):
